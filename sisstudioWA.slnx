@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="sisstudioWA.BD/sisstudioWA.BD.csproj" />
+  <Project Path="sisstudioWA.Client/sisstudioWA.Client.csproj" />
+  <Project Path="sisstudioWA.Repositorio/sisstudioWA.Repositorio.csproj" />
+  <Project Path="sisstudioWA.Server/sisstudioWA.Server.csproj" />
+  <Project Path="sisstudioWA.Servicios/sisstudioWA.Servicios.csproj" />
+  <Project Path="sisstudioWA.Shared/sisstudioWA.Shared.csproj" />
+</Solution>
