@@ -23,4 +23,8 @@
     <ProjectReference Include="..\sisstudioWA.Shared\sisstudioWA.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Migrations\" />
+  </ItemGroup>
+
 </Project>

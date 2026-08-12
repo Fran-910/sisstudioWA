@@ -25,34 +25,34 @@ namespace sisstudioWA.BD.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "DetalleCarritos",
+                name: "DetallesCarritos",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     idCarrito = table.Column<int>(type: "int", nullable: false),
                     idProducto = table.Column<int>(type: "int", nullable: false),
-                    cantidad = table.Column<int>(type: "int", nullable: false)
+                    Cantidad = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_DetalleCarritos", x => x.Id);
+                    table.PrimaryKey("PK_DetallesCarritos", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "DetallePedidos",
+                name: "DetallesPedidos",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     idProducto = table.Column<int>(type: "int", nullable: false),
                     idPedido = table.Column<int>(type: "int", nullable: false),
-                    cantidad = table.Column<int>(type: "int", nullable: false),
-                    precio_unitario = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
+                    Cantidad = table.Column<int>(type: "int", nullable: false),
+                    Precio_Unitario = table.Column<decimal>(type: "decimal(18,2)", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_DetallePedidos", x => x.Id);
+                    table.PrimaryKey("PK_DetallesPedidos", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -62,8 +62,8 @@ namespace sisstudioWA.BD.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     idProducto = table.Column<int>(type: "int", nullable: false),
-                    url = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    orden = table.Column<int>(type: "int", nullable: false)
+                    Url = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Orden = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -71,7 +71,7 @@ namespace sisstudioWA.BD.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "KitProductos",
+                name: "KitsProductos",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -81,23 +81,23 @@ namespace sisstudioWA.BD.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_KitProductos", x => x.Id);
+                    table.PrimaryKey("PK_KitsProductos", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
-                name: "NotificacionStocks",
+                name: "NotificacionesStocks",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     idUsuario = table.Column<int>(type: "int", nullable: false),
                     idProducto = table.Column<int>(type: "int", nullable: false),
-                    fecha_solicitud = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    estado = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Fecha_Solicitud = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Estado = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_NotificacionStocks", x => x.Id);
+                    table.PrimaryKey("PK_NotificacionesStocks", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -107,10 +107,10 @@ namespace sisstudioWA.BD.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     idUsuario = table.Column<int>(type: "int", nullable: false),
-                    fecha = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    estado = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    monto_total = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    envio = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Fecha = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Estado = table.Column<int>(type: "int", nullable: false),
+                    Monto_Total = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Envio = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -123,12 +123,12 @@ namespace sisstudioWA.BD.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    nombre = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    subtitulo = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    descripcion = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    tipo = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    precio = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
-                    stock = table.Column<int>(type: "int", nullable: false)
+                    Nombre = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Subtitulo = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Descripcion = table.Column<string>(type: "nvarchar(250)", maxLength: 250, nullable: false),
+                    tipoProd = table.Column<int>(type: "int", nullable: false),
+                    Precio = table.Column<decimal>(type: "decimal(18,2)", nullable: false),
+                    Stock = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -141,10 +141,10 @@ namespace sisstudioWA.BD.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    nombre = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    email = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    contraseña = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    tel = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Nombre = table.Column<string>(type: "nvarchar(45)", maxLength: 45, nullable: false),
+                    Email = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Contraseña = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    Tel = table.Column<string>(type: "nvarchar(15)", maxLength: 15, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -159,19 +159,19 @@ namespace sisstudioWA.BD.Migrations
                 name: "Carritos");
 
             migrationBuilder.DropTable(
-                name: "DetalleCarritos");
+                name: "DetallesCarritos");
 
             migrationBuilder.DropTable(
-                name: "DetallePedidos");
+                name: "DetallesPedidos");
 
             migrationBuilder.DropTable(
                 name: "Imagenes");
 
             migrationBuilder.DropTable(
-                name: "KitProductos");
+                name: "KitsProductos");
 
             migrationBuilder.DropTable(
-                name: "NotificacionStocks");
+                name: "NotificacionesStocks");
 
             migrationBuilder.DropTable(
                 name: "Pedidos");

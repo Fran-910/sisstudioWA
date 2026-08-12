@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\sisstudioWA.BD\sisstudioWA.BD.csproj" />
     <ProjectReference Include="..\sisstudioWA.Shared\sisstudioWA.Shared.csproj" />
   </ItemGroup>
 

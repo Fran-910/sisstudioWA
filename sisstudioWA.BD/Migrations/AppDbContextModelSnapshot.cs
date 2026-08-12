@@ -17,7 +17,7 @@ namespace sisstudioWA.BD.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.8")
+                .HasAnnotation("ProductVersion", "10.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -46,7 +46,7 @@ namespace sisstudioWA.BD.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("cantidad")
+                    b.Property<int>("Cantidad")
                         .HasColumnType("int");
 
                     b.Property<int>("idCarrito")
@@ -57,7 +57,7 @@ namespace sisstudioWA.BD.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("DetalleCarritos");
+                    b.ToTable("DetallesCarritos");
                 });
 
             modelBuilder.Entity("sisstudioWA.BD.Datos.Entity.DetallePedido", b =>
@@ -68,8 +68,11 @@ namespace sisstudioWA.BD.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("cantidad")
+                    b.Property<int>("Cantidad")
                         .HasColumnType("int");
+
+                    b.Property<decimal>("Precio_Unitario")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("idPedido")
                         .HasColumnType("int");
@@ -77,12 +80,9 @@ namespace sisstudioWA.BD.Migrations
                     b.Property<int>("idProducto")
                         .HasColumnType("int");
 
-                    b.Property<decimal>("precio_unitario")
-                        .HasColumnType("decimal(18,2)");
-
                     b.HasKey("Id");
 
-                    b.ToTable("DetallePedidos");
+                    b.ToTable("DetallesPedidos");
                 });
 
             modelBuilder.Entity("sisstudioWA.BD.Datos.Entity.Imagen", b =>
@@ -93,15 +93,15 @@ namespace sisstudioWA.BD.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("idProducto")
+                    b.Property<int>("Orden")
                         .HasColumnType("int");
 
-                    b.Property<int>("orden")
-                        .HasColumnType("int");
-
-                    b.Property<string>("url")
+                    b.Property<string>("Url")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("idProducto")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -124,7 +124,7 @@ namespace sisstudioWA.BD.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("KitProductos");
+                    b.ToTable("KitsProductos");
                 });
 
             modelBuilder.Entity("sisstudioWA.BD.Datos.Entity.NotificacionStock", b =>
@@ -135,11 +135,10 @@ namespace sisstudioWA.BD.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("estado")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Estado")
+                        .HasColumnType("int");
 
-                    b.Property<DateTime>("fecha_solicitud")
+                    b.Property<DateTime>("Fecha_Solicitud")
                         .HasColumnType("datetime2");
 
                     b.Property<int>("idProducto")
@@ -150,7 +149,7 @@ namespace sisstudioWA.BD.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("NotificacionStocks");
+                    b.ToTable("NotificacionesStocks");
                 });
 
             modelBuilder.Entity("sisstudioWA.BD.Datos.Entity.Pedido", b =>
@@ -161,22 +160,20 @@ namespace sisstudioWA.BD.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("envio")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Envio")
+                        .HasColumnType("int");
 
-                    b.Property<string>("estado")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("Estado")
+                        .HasColumnType("int");
 
-                    b.Property<DateTime>("fecha")
+                    b.Property<DateTime>("Fecha")
                         .HasColumnType("datetime2");
+
+                    b.Property<decimal>("Monto_Total")
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("idUsuario")
                         .HasColumnType("int");
-
-                    b.Property<decimal>("monto_total")
-                        .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");
 
@@ -191,27 +188,29 @@ namespace sisstudioWA.BD.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("descripcion")
+                    b.Property<string>("Descripcion")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(250)
+                        .HasColumnType("nvarchar(250)");
 
-                    b.Property<string>("nombre")
+                    b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.Property<decimal>("precio")
+                    b.Property<decimal>("Precio")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("stock")
+                    b.Property<int>("Stock")
                         .HasColumnType("int");
 
-                    b.Property<string>("subtitulo")
+                    b.Property<string>("Subtitulo")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("tipo")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("tipoProd")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -226,21 +225,24 @@ namespace sisstudioWA.BD.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("contraseña")
+                    b.Property<string>("Contraseña")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("email")
+                    b.Property<string>("Nombre")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(45)
+                        .HasColumnType("nvarchar(45)");
 
-                    b.Property<string>("nombre")
+                    b.Property<string>("Tel")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("tel")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(15)
+                        .HasColumnType("nvarchar(15)");
 
                     b.HasKey("Id");
 

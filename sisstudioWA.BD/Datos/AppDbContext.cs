@@ -9,11 +9,11 @@ namespace sisstudioWA.BD.Datos
     public class AppDbContext : DbContext
     {
         public DbSet<Carrito> Carritos { get; set; }
-        public DbSet<DetalleCarrito > DetalleCarritos { get; set; }
-        public DbSet<DetallePedido> DetallePedidos { get; set; }
+        public DbSet<DetalleCarrito> DetallesCarritos { get; set; }
+        public DbSet<DetallePedido> DetallesPedidos { get; set; }
         public DbSet<Imagen> Imagenes { get; set; }
-        public DbSet<KitProducto> KitProductos { get; set; }
-        public DbSet<NotificacionStock> NotificacionStocks { get; set; }
+        public DbSet<KitProducto> KitsProductos { get; set; }
+        public DbSet<NotificacionStock> NotificacionesStocks { get; set; }
         public DbSet<Pedido> Pedidos { get; set; }
         public DbSet<Producto> Productos { get; set; }
         public DbSet<Usuario> Usuarios { get; set; }
