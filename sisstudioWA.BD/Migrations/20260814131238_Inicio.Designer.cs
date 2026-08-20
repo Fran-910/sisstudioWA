@@ -12,7 +12,7 @@ using sisstudioWA.BD.Datos;
 namespace sisstudioWA.BD.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260812162905_Inicio")]
+    [Migration("20260814131238_Inicio")]
     partial class Inicio
     {
         /// <inheritdoc />
@@ -86,29 +86,6 @@ namespace sisstudioWA.BD.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("DetallesPedidos");
-                });
-
-            modelBuilder.Entity("sisstudioWA.BD.Datos.Entity.Imagen", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("Orden")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Url")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("idProducto")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Imagenes");
                 });
 
             modelBuilder.Entity("sisstudioWA.BD.Datos.Entity.KitProducto", b =>
@@ -195,6 +172,10 @@ namespace sisstudioWA.BD.Migrations
                         .IsRequired()
                         .HasMaxLength(250)
                         .HasColumnType("nvarchar(250)");
+
+                    b.PrimitiveCollection<string>("Imagenes")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Nombre")
                         .IsRequired()

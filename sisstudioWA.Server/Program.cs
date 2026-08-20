@@ -23,7 +23,7 @@ builder.Services.AddMvc();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-builder.Services.AddScoped<Repositorio<Producto>, Repositorio<Producto>>();
+builder.Services.AddScoped<IProductoRepositorio, ProductoRepositorio>();
 
 #endregion
 

@@ -1,6 +1,7 @@
 ﻿using sisstudioWA.Shared.Enum;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
@@ -16,13 +17,17 @@ namespace sisstudioWA.BD.Datos.Entity
         public string Subtitulo { get; set; }
         [StringLength(250)]
         public string Descripcion { get; set; }
+        [Required]
+        public string[] Imagenes { get; set; }
         public TipoProd tipoProd { get; set; } = TipoProd.Producto;//Enum: tipo_producto, ej: "Kit, Producto individual"
         [Required(ErrorMessage = "El precio del producto es obligatorio.")]
         [Range(0, double.MaxValue, ErrorMessage = "El precio del producto debe ser un valor positivo.")]
         [Column(TypeName = "decimal(18,2)")]
+        [DefaultValue(0.00)]
         public decimal Precio { get; set; }
         [Required(ErrorMessage = "El stock del producto es obligatorio.")]
         [Range(0, int.MaxValue, ErrorMessage = "El stock del producto debe ser un valor positivo.")]
+        [DefaultValue(0)]
         public int Stock { get; set; }
     }
 }

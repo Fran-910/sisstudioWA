@@ -11,7 +11,6 @@ namespace sisstudioWA.BD.Datos
         public DbSet<Carrito> Carritos { get; set; }
         public DbSet<DetalleCarrito> DetallesCarritos { get; set; }
         public DbSet<DetallePedido> DetallesPedidos { get; set; }
-        public DbSet<Imagen> Imagenes { get; set; }
         public DbSet<KitProducto> KitsProductos { get; set; }
         public DbSet<NotificacionStock> NotificacionesStocks { get; set; }
         public DbSet<Pedido> Pedidos { get; set; }
