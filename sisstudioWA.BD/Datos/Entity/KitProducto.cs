@@ -8,8 +8,10 @@ namespace sisstudioWA.BD.Datos.Entity
     public class KitProducto : EntityBase
     {
         [Required]
-        public int idKit { get; set; }
+        public int KitId { get; set; }
+        public Producto Kit { get; set; }
         [Required]
-        public int idProducto { get; set; }
+        public int ProductoId { get; set; }
+        public Producto Producto { get; set; }
     }
 }

@@ -12,7 +12,7 @@ using sisstudioWA.BD.Datos;
 namespace sisstudioWA.BD.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260814131238_Inicio")]
+    [Migration("20260923170626_Inicio")]
     partial class Inicio
     {
         /// <inheritdoc />
@@ -20,7 +20,7 @@ namespace sisstudioWA.BD.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.10")
+                .HasAnnotation("ProductVersion", "10.0.12")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -33,10 +33,12 @@ namespace sisstudioWA.BD.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("idUsuario")
+                    b.Property<int>("UsuarioId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
 
                     b.ToTable("Carritos");
                 });
@@ -52,13 +54,17 @@ namespace sisstudioWA.BD.Migrations
                     b.Property<int>("Cantidad")
                         .HasColumnType("int");
 
-                    b.Property<int>("idCarrito")
+                    b.Property<int>("CarritoId")
                         .HasColumnType("int");
 
-                    b.Property<int>("idProducto")
+                    b.Property<int>("ProductoId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("CarritoId");
+
+                    b.HasIndex("ProductoId");
 
                     b.ToTable("DetallesCarritos");
                 });
@@ -74,16 +80,20 @@ namespace sisstudioWA.BD.Migrations
                     b.Property<int>("Cantidad")
                         .HasColumnType("int");
 
+                    b.Property<int>("PedidoId")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("Precio_Unitario")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("idPedido")
-                        .HasColumnType("int");
-
-                    b.Property<int>("idProducto")
+                    b.Property<int>("ProductoId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("PedidoId");
+
+                    b.HasIndex("ProductoId");
 
                     b.ToTable("DetallesPedidos");
                 });
@@ -96,13 +106,17 @@ namespace sisstudioWA.BD.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("idKit")
+                    b.Property<int>("KitId")
                         .HasColumnType("int");
 
-                    b.Property<int>("idProducto")
+                    b.Property<int>("ProductoId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("KitId");
+
+                    b.HasIndex("ProductoId");
 
                     b.ToTable("KitsProductos");
                 });
@@ -121,13 +135,17 @@ namespace sisstudioWA.BD.Migrations
                     b.Property<DateTime>("Fecha_Solicitud")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("idProducto")
+                    b.Property<int>("ProductoId")
                         .HasColumnType("int");
 
-                    b.Property<int>("idUsuario")
+                    b.Property<int>("UsuarioId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ProductoId");
+
+                    b.HasIndex("UsuarioId");
 
                     b.ToTable("NotificacionesStocks");
                 });
@@ -152,10 +170,12 @@ namespace sisstudioWA.BD.Migrations
                     b.Property<decimal>("Monto_Total")
                         .HasColumnType("decimal(18,2)");
 
-                    b.Property<int>("idUsuario")
+                    b.Property<int>("UsuarioId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("UsuarioId");
 
                     b.ToTable("Pedidos");
                 });
@@ -231,6 +251,104 @@ namespace sisstudioWA.BD.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Usuarios");
+                });
+
+            modelBuilder.Entity("sisstudioWA.BD.Datos.Entity.Carrito", b =>
+                {
+                    b.HasOne("sisstudioWA.BD.Datos.Entity.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("sisstudioWA.BD.Datos.Entity.DetalleCarrito", b =>
+                {
+                    b.HasOne("sisstudioWA.BD.Datos.Entity.Carrito", "Carrito")
+                        .WithMany()
+                        .HasForeignKey("CarritoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("sisstudioWA.BD.Datos.Entity.Producto", "Producto")
+                        .WithMany()
+                        .HasForeignKey("ProductoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Carrito");
+
+                    b.Navigation("Producto");
+                });
+
+            modelBuilder.Entity("sisstudioWA.BD.Datos.Entity.DetallePedido", b =>
+                {
+                    b.HasOne("sisstudioWA.BD.Datos.Entity.Pedido", "Pedido")
+                        .WithMany()
+                        .HasForeignKey("PedidoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("sisstudioWA.BD.Datos.Entity.Producto", "Producto")
+                        .WithMany()
+                        .HasForeignKey("ProductoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Pedido");
+
+                    b.Navigation("Producto");
+                });
+
+            modelBuilder.Entity("sisstudioWA.BD.Datos.Entity.KitProducto", b =>
+                {
+                    b.HasOne("sisstudioWA.BD.Datos.Entity.Producto", "Kit")
+                        .WithMany()
+                        .HasForeignKey("KitId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("sisstudioWA.BD.Datos.Entity.Producto", "Producto")
+                        .WithMany()
+                        .HasForeignKey("ProductoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Kit");
+
+                    b.Navigation("Producto");
+                });
+
+            modelBuilder.Entity("sisstudioWA.BD.Datos.Entity.NotificacionStock", b =>
+                {
+                    b.HasOne("sisstudioWA.BD.Datos.Entity.Producto", "Producto")
+                        .WithMany()
+                        .HasForeignKey("ProductoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("sisstudioWA.BD.Datos.Entity.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Producto");
+
+                    b.Navigation("Usuario");
+                });
+
+            modelBuilder.Entity("sisstudioWA.BD.Datos.Entity.Pedido", b =>
+                {
+                    b.HasOne("sisstudioWA.BD.Datos.Entity.Usuario", "Usuario")
+                        .WithMany()
+                        .HasForeignKey("UsuarioId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Usuario");
                 });
 #pragma warning restore 612, 618
         }

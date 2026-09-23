@@ -10,7 +10,8 @@ namespace sisstudioWA.BD.Datos.Entity
     public class Pedido : EntityBase
     {
         [Required]
-        public int idUsuario { get; set; }
+        public int UsuarioId { get; set; }
+        public Usuario Usuario { get; set; }
         [Required]
         public DateTime Fecha { get; set; }
 

@@ -29,8 +29,8 @@ namespace sisstudioWA.Repositorio.Repositorios
             {
 
                 var kitProducto = new KitProducto();
-                kitProducto.idKit = producto.Id;
-                kitProducto.idProducto = idProducto;
+                kitProducto.KitId = producto.Id;
+                kitProducto.ProductoId = idProducto;
                 await _context.KitsProductos.AddAsync(kitProducto);
             }
 
@@ -40,7 +40,7 @@ namespace sisstudioWA.Repositorio.Repositorios
 
         public async Task<List<Producto>> GetProductosKitById(int id)
         {
-            var productoKit = await _context.KitsProductos.Where(kp => kp.idKit == id).ToListAsync();
+            var productoKit = await _context.KitsProductos.Where(kp => kp.KitId == id).ToListAsync();
 
             var productos = new List<Producto>();
 
@@ -56,7 +56,7 @@ namespace sisstudioWA.Repositorio.Repositorios
 
             foreach (var kp in productoKit)
             {
-                var producto = await _context.Productos.Where(p => p.Id == kp.idProducto).FirstOrDefaultAsync();
+                var producto = await _context.Productos.Where(p => p.Id == kp.ProductoId).FirstOrDefaultAsync();
 
                 if (producto != null)
                 {

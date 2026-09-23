@@ -20,5 +20,20 @@ namespace sisstudioWA.BD.Datos
         {
 
         }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<KitProducto>()
+                .HasOne(kp => kp.Kit)
+                .WithMany()
+                .HasForeignKey(kp => kp.KitId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<KitProducto>()
+                .HasOne(kp => kp.Producto)
+                .WithMany()
+                .HasForeignKey(kp => kp.ProductoId)
+                .OnDelete(DeleteBehavior.Restrict);
+        }
     }
 }

@@ -8,6 +8,7 @@ namespace sisstudioWA.BD.Datos.Entity
     public class Carrito : EntityBase
     {
         [Required]
-        public int idUsuario { get; set; }
+        public int UsuarioId { get; set; }
+        public Usuario Usuario { get; set; }
     }
 }

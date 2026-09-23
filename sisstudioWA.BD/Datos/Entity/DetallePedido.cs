@@ -9,9 +9,11 @@ namespace sisstudioWA.BD.Datos.Entity
     public class DetallePedido : EntityBase
     {
         [Required]
-        public int idProducto { get; set; }
+        public int ProductoId { get; set; }
+        public Producto Producto { get; set; }
         [Required]
-        public int idPedido { get; set; }
+        public int PedidoId { get; set; }
+        public Pedido Pedido { get; set; }
         [Required]
         public int Cantidad { get; set; } = 0;
         [Required]
