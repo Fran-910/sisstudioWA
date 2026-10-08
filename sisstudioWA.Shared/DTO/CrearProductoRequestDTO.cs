@@ -4,9 +4,9 @@ using System.Text;
 
 namespace sisstudioWA.Shared.DTO
 {
-    public class CrearProductoRequestDTO
+    public class CUProductoRequestDTO
     {
         public ProductoPrivadoDTO DTO { get; set; }
-        public List<int> idProductosKit { get; set; }
+        public List<int> idProductosKit { get; set; } = new List<int>();
     }
 }

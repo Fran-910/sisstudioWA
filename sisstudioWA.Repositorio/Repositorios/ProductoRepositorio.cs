@@ -38,6 +38,52 @@ namespace sisstudioWA.Repositorio.Repositorios
             return true;
         }
 
+        public async Task<bool> UpdateKit(int id, Producto producto, List<int> idProductosComponentes)
+        {
+            var productoExistente = await _context.Productos.Where(p => p.Id == id).FirstOrDefaultAsync();
+
+            if (productoExistente == null)
+            {
+                Console.WriteLine("No se encontró el producto con ID: " + id);
+                return false; // El producto no existe
+            }
+            else
+            {
+                productoExistente.Nombre = producto.Nombre;
+                productoExistente.Subtitulo = producto.Subtitulo;
+                productoExistente.Descripcion = producto.Descripcion;
+                productoExistente.Imagenes = producto.Imagenes;
+                productoExistente.tipoProd = producto.tipoProd;
+                productoExistente.Precio = producto.Precio;
+                productoExistente.Stock = producto.Stock;
+
+                await _context.SaveChangesAsync();
+
+                // Eliminar los componentes existentes del kit  
+                var componentesExistentes = await _context.KitsProductos.Where(kp => kp.KitId == id).ToListAsync();
+
+                foreach (var componente in componentesExistentes)
+                {
+                    _context.KitsProductos.Remove(componente);
+                }
+
+                foreach (var idProducto in idProductosComponentes)
+                {
+
+                    var kitProducto = new KitProducto();
+                    kitProducto.KitId = productoExistente.Id;
+                    kitProducto.ProductoId = idProducto;
+                    await _context.KitsProductos.AddAsync(kitProducto);
+
+                }
+
+                await _context.SaveChangesAsync();
+
+                return true; // Actualización exitosa
+
+            }
+        }
+
         public async Task<List<Producto>> GetProductosKitById(int id)
         {
             var productoKit = await _context.KitsProductos.Where(kp => kp.KitId == id).ToListAsync();
@@ -65,6 +111,12 @@ namespace sisstudioWA.Repositorio.Repositorios
             }
 
             return productos;
+        }
+
+        public async Task<List<int>> GetIdProductosKit(int id)
+        {
+            var productoKit = await _context.KitsProductos.Where(kp => kp.KitId == id).ToListAsync();
+            return productoKit.Select(kp => kp.ProductoId).ToList();
         }
     }
 }

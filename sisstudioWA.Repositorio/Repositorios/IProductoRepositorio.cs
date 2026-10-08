@@ -8,6 +8,9 @@ namespace sisstudioWA.Repositorio.Repositorios
     public interface IProductoRepositorio : IRepositorio<Producto>
     {
         Task<bool> InsertKit(Producto producto, List<int> idProductosComponentes);
-        public Task<List<Producto>> GetProductosKitById(int id);
+        Task<List<Producto>> GetProductosKitById(int id);
+        Task<List<int>> GetIdProductosKit(int id);
+        Task<bool> UpdateKit(int id, Producto producto, List<int> idProductosComponentes);
+
     }
 }

@@ -14,15 +14,6 @@ namespace sisstudioWA.Server.Controllers
     {
         private readonly IProductoRepositorio repositorio;
 
-        #region OldContextDb
-        //private readonly AppDbContext context;
-
-        //public ProductoController(AppDbContext context)
-        //{
-        //    this.context = context;
-        //}
-        #endregion
-
         public ProductoController(IProductoRepositorio repositorio)
         {
             this.repositorio = repositorio;
@@ -32,26 +23,6 @@ namespace sisstudioWA.Server.Controllers
         [HttpGet] // api/producto
         public async Task<ActionResult<List<ProductoPublicoDTO>>> ListaProductosClientes()
         {
-            #region OldController
-            //var productos = await context.Productos.ToListAsync();
-            //if (productos != null)
-            //{
-            //    return Ok(productos
-            //        .Select(p => new ProductoPublicoDTO
-            //        {
-            //            Nombre = p.Nombre,
-            //            Subtitulo = p.Subtitulo,
-            //            Descripcion = p.Descripcion,
-            //            Precio = p.Precio,
-            //            HayStock = (p.Stock > 0),
-            //            tipoProd = p.tipoProd
-            //        }).ToList());
-            //}
-            //else
-            //{
-            //    return NotFound("No se encontraron productos");
-            //}
-            #endregion
 
             var productos = await repositorio.Select();
 
@@ -94,7 +65,7 @@ namespace sisstudioWA.Server.Controllers
         }
 
         [HttpPost] // api/producto
-        public async Task<ActionResult> CrearProducto(CrearProductoRequestDTO DTO)//List<int>? idProductosComponentes)
+        public async Task<ActionResult> CrearProducto(CUProductoRequestDTO DTO)//List<int>? idProductosComponentes)
         {
             Producto producto = new Producto();
             producto.Nombre = DTO.DTO.Nombre;
@@ -169,6 +140,42 @@ namespace sisstudioWA.Server.Controllers
                 return Ok(actualizado);
             }
             return BadRequest("Error al actualizar el producto: " + actualizado);
+        }
+
+        [HttpPut("kit/{id:int}")] // api/producto/kit/{id}
+
+        public async Task<ActionResult<bool>> ActualizarKit(int id, CUProductoRequestDTO DTO)
+        {
+            Producto producto = new Producto();
+            producto.Nombre = DTO.DTO.Nombre;
+            producto.Subtitulo = DTO.DTO.Subtitulo;
+            producto.Descripcion = DTO.DTO.Descripcion;
+            producto.Imagenes = DTO.DTO.Imagenes;
+            producto.Precio = DTO.DTO.Precio;
+            producto.tipoProd = DTO.DTO.tipoProd;
+            producto.Stock = DTO.DTO.Stock;
+
+            if (id <= 0)
+            {
+                return BadRequest("El ID del producto es inválido.");
+            }
+            if(DTO.idProductosKit == null || DTO.idProductosKit.Count == 0 || DTO.idProductosKit.Any(x => x <= 0))
+            {
+                return BadRequest("Debe proporcionar al menos un ID de producto componente para actualizar un Kit.");
+            }
+
+            bool actualizado = await repositorio.UpdateKit(id, producto, DTO.idProductosKit);
+
+            if (actualizado)
+            {
+                return Ok(actualizado);
+            }
+            else
+            {
+                return BadRequest("Error al actualizar el kit: " + actualizado);
+            }
+
+
         }
 
         [HttpDelete("{id:int}")] // api/producto/{id}

@@ -12,7 +12,7 @@ using sisstudioWA.BD.Datos;
 namespace sisstudioWA.BD.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260923170626_Inicio")]
+    [Migration("20261008000456_Inicio")]
     partial class Inicio
     {
         /// <inheritdoc />
