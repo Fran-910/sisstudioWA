@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using sisstudioWA.BD.Datos;
 using sisstudioWA.BD.Datos.Entity;
 using sisstudioWA.Repositorio.Repositorios;
@@ -13,10 +14,14 @@ namespace sisstudioWA.Server.Controllers
     public class ProductoController : ControllerBase
     {
         private readonly IProductoRepositorio repositorio;
+        private readonly IWebHostEnvironment environment;
+        private readonly IConfiguration configuration;
 
-        public ProductoController(IProductoRepositorio repositorio)
+        public ProductoController(IProductoRepositorio repositorio ,IWebHostEnvironment env, IConfiguration config)
         {
             this.repositorio = repositorio;
+            this.environment = env;
+            this.configuration = config;
         }
 
 
@@ -64,9 +69,10 @@ namespace sisstudioWA.Server.Controllers
             }
         }
 
-        [HttpPost] // api/producto
-        public async Task<ActionResult> CrearProducto(CUProductoRequestDTO DTO)//List<int>? idProductosComponentes)
+        [HttpPost("crear")] // api/producto
+        public async Task<ActionResult> CrearProducto([FromForm] IFormFileCollection imagenes, [FromForm] CUProductoRequestDTO DTO)//List<int>? idProductosComponentes)
         {
+
             Producto producto = new Producto();
 
             producto.Nombre = DTO.DTO.Nombre;
@@ -76,6 +82,48 @@ namespace sisstudioWA.Server.Controllers
             producto.Precio = DTO.DTO.Precio;
             producto.tipoProd = DTO.DTO.tipoProd;
             producto.Stock = DTO.DTO.Stock;
+
+            var path = configuration["Storage:ProductosPath"];
+            var rutasWeb = new List<string>();
+            if (!Path.IsPathRooted(path))
+            {
+                path = Path.Combine(environment.ContentRootPath, path);
+            }
+
+            foreach (var img in imagenes)
+            {
+                if (img.Length > 0)
+                {
+                    // Aquí puedes realizar validaciones adicionales si es necesario
+                    // Por ejemplo, verificar el tipo de archivo, tamaño máximo, etc.
+                    var extension = Path.GetExtension(img.FileName);
+                    var prodFolder = Path.Combine(path, producto.Nombre);
+                    Directory.CreateDirectory(prodFolder);
+                    var nombreArchivo = $"{producto.Nombre}_{Guid.NewGuid().ToString()}{extension}";
+                    var rutaArchivo = Path.Combine(prodFolder, nombreArchivo);
+
+                    using (var stream = new FileStream(rutaArchivo, FileMode.Create))
+                    {
+                        await img.CopyToAsync(stream);
+                    }
+
+                    var rutaWeb = $"/uploads/{producto.Nombre}/{nombreArchivo}";
+                    rutasWeb.Add(rutaWeb);
+                }
+                else
+                {
+                    return BadRequest("Uno o más archivos de imagen están vacíos.");
+                }
+            }
+
+            if(rutasWeb.Count > 0)
+            {
+                producto.Imagenes = rutasWeb.ToArray();
+            }
+            else
+            {
+                return BadRequest("No se proporcionaron imágenes válidas para el producto.");
+            }
 
             if (producto.tipoProd == TipoProd.Producto)
             {

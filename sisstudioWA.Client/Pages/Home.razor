@@ -1,4 +1,5 @@
 ﻿@page "/"
+@using System.Text.Json
 @using sisstudioWA.Servicios.ServicioHttp
 @using sisstudioWA.Shared.DTO
 @using sisstudioWA.Shared.Enum
@@ -61,17 +62,26 @@
 <!-- 1. El Input para seleccionar múltiples imágenes -->
 <div>
     <label>Seleccionar Imágenes (Max 5):</label>
-    <InputFile OnChange="CargarArchivos" multiple accept="image/png, image/jpeg, image/webp" class="form-control" />
+    <InputFile OnChange="CargarImagenes" multiple accept="image/png, image/jpeg, image/webp" class="form-control" />
 </div>
 
 <!-- 2. Galería de Vistas Previas (Previews) -->
 <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px;">
-    @foreach (var imgUrl in vistasPrevias)
+    @if (vistasPrevias.Count == 0)
     {
-        <div style="position: relative;">
-            <img src="@imgUrl" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px; border: 1px solid #ccc;" />
-        </div>
+    <p>No se han seleccionado imágenes.</p>
     }
+    else
+    {
+        <p>Vistas previas de las imágenes seleccionadas:</p>
+        @foreach (var imgUrl in vistasPrevias)
+        {
+            <div style="position: relative;">
+                <img src="@imgUrl" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px; border: 1px solid #ccc;" />
+            </div>
+        }
+    }
+
 </div>
 
 <!-- 3. Botón para enviar todo al servidor -->
@@ -83,9 +93,11 @@
 
     public CUProductoRequestDTO miDto = new CUProductoRequestDTO();
     public List<ProductoPrivadoDTO> productosBusqueda = new List<ProductoPrivadoDTO>();
+    private List<IBrowserFile> imagenesSeleccionadas = new List<IBrowserFile>();
     private List<string> vistasPrevias = new List<string>();
     private string terminoBusqueda = string.Empty;
     private string busquedaState = string.Empty;
+    private long maxFileSize = 1024 * 1024 * 5;
 
 
     protected override void OnInitialized()
@@ -98,7 +110,7 @@
         var response = await http.GetAsync<List<ProductoPrivadoDTO>>($"api/producto/admin");
 
         var productos = response.Data;
-        
+
         if(productos == null || !productos.Any())
         {
             await ChangeMessage("No se encontraron productos.");
@@ -112,7 +124,7 @@
         var productosFiltrados = productos.Where(p =>
             p.Nombre.Contains(terminoBusqueda, StringComparison.OrdinalIgnoreCase) ||
             (esId && p.id == idBuscado)).ToList();
-        
+
         if (productosFiltrados.Count == 0)
         {
             await ChangeMessage("No se encontraron productos con ese término.");
@@ -127,7 +139,7 @@
 
     public async Task ChangeMessage(string newMessage)
     {
-         // Simula un retraso de 1 segundo
+        // Simula un retraso de 1 segundo
         busquedaState = newMessage;
         StateHasChanged();
         await Task.Delay(1000);
@@ -135,21 +147,66 @@
         StateHasChanged();
     }
 
-    private void CrearProducto()
+    private async Task CrearProducto()
     {
         // Aquí puedes implementar la lógica para enviar el DTO y las imágenes al servidor.
         // Por ejemplo, podrías usar HttpClient para hacer una solicitud POST.
         // Asegúrate de manejar la validación y los errores según sea necesario.
-    }
 
-    private void CargarArchivos()
-    {
-        // Aquí puedes implementar la lógica para manejar los archivos seleccionados.
-        // Por ejemplo, podrías leer los archivos y generar vistas previas.
-        // Asegúrate de limitar la cantidad de archivos a 5 y validar el tipo de archivo.
+        var formData = new MultipartFormDataContent();
         
+        foreach (var image in imagenesSeleccionadas)
+        {
+            var streamContent = new StreamContent(image.OpenReadStream(maxFileSize));
+            streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(image.ContentType);
+            formData.Add(streamContent, "imagenes", image.Name);
+        }
+
+        formData.Add(new StringContent(JsonSerializer.Serialize(miDto)), "producto");
+
+        var response = await http.PostAsync<MultipartFormDataContent, CUProductoRequestDTO>("api/producto/crear", formData);
+
+        if (response.IsSuccess)
+        {
+            // Producto creado exitosamente
+            Console.WriteLine("Producto creado exitosamente.");
+            // Redirigir o limpiar el formulario según sea necesario
+        }
+        else
+        {
+            // Manejar error
+            Console.WriteLine($"Error al crear producto: {response.Message}");
+        }
     }
 
-    
+    private async Task CargarImagenes(InputFileChangeEventArgs e)
+    {
+        imagenesSeleccionadas.Clear();
+        vistasPrevias.Clear();
 
+        foreach (var image in e.GetMultipleFiles(5))
+        {
+            if (image.Size > maxFileSize)
+            {
+                // Manejar el caso de archivo demasiado grande
+
+                continue;
+            }
+            imagenesSeleccionadas.Add(image);
+            // Generar vista previa
+            using var stream = image.OpenReadStream(maxFileSize);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            var base64 = Convert.ToBase64String(ms.ToArray());
+            var imgUrl = $"data:{image.ContentType};base64,{base64}";
+            vistasPrevias.Add(imgUrl);
+        }
+
+        foreach (var img in vistasPrevias)
+        {
+            Console.WriteLine($"Vista previa generada: {img}");
+        }
+
+        StateHasChanged();
+    }
 }
