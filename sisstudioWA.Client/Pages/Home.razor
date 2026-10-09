@@ -1,7 +1,155 @@
 ﻿@page "/"
+@using sisstudioWA.Servicios.ServicioHttp
+@using sisstudioWA.Shared.DTO
+@using sisstudioWA.Shared.Enum
 @inject NavigationManager navigationManager
+@inject IHttpService http
 
-<PageTitle>Home</PageTitle>
+<h3>Crear Producto</h3>
+
+<!-- Formulario de datos del producto -->
+<div class="new-prod-form">
+    <label>Nombre del Producto:</label>
+    <input type="text" @bind="miDto.DTO.Nombre" class="form-control" />
+    <label>Subtitulo:</label>
+    <input type="text" @bind="miDto.DTO.Subtitulo" class="form-control" />
+    <label for="estado">Tipo de producto:</label>
+    <select id="estado" @bind="miDto.DTO.tipoProd" class="form-control">
+        <option value="@TipoProd.Producto">Producto Individual</option>
+        <option value="@TipoProd.Kit">Kit</option>
+    </select>
+    <label>Descripción:</label>
+    <input type="text" @bind="miDto.DTO.Descripcion" class="form-control" />
+    <label>Precio:</label>
+    <input type="number" @bind="miDto.DTO.Precio" class="form-control" />
+    <label>Stock:</label>
+    <input type="number" @bind="miDto.DTO.Stock" class="form-control" />
+</div>
+
+@if (miDto.DTO.tipoProd == TipoProd.Kit)
+{
+    <div class="kit-section">
+        <h4>Agregar Productos al Kit</h4>
+        <form @onsubmit="BuscarProducto" @onsubmit:preventDefault="true">
+            <input type="search" @bind="terminoBusqueda" placeholder="Buscar producto por nombre o ID..." class="form-control" />
+        </form>
+        
+        @if(productosBusqueda.Count == 0 && !string.IsNullOrWhiteSpace(terminoBusqueda))
+        {
+            <p>@busquedaState</p>
+        }
+        else
+        {
+            <p>@busquedaState</p>
+            @foreach (var producto in productosBusqueda)
+            {
+                <div>
+                    <label>
+                        @producto.Nombre
+                    </label>
+                </div>
+            }
+        }
+
+
+    </div>
+}
+
+
+<hr />
+
+<!-- 1. El Input para seleccionar múltiples imágenes -->
+<div>
+    <label>Seleccionar Imágenes (Max 5):</label>
+    <InputFile OnChange="CargarArchivos" multiple accept="image/png, image/jpeg, image/webp" class="form-control" />
+</div>
+
+<!-- 2. Galería de Vistas Previas (Previews) -->
+<div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px;">
+    @foreach (var imgUrl in vistasPrevias)
+    {
+        <div style="position: relative;">
+            <img src="@imgUrl" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px; border: 1px solid #ccc;" />
+        </div>
+    }
+</div>
+
+<!-- 3. Botón para enviar todo al servidor -->
+<div style="margin-top: 20px;">
+    <button class="btn btn-primary" @onclick="CrearProducto">CREAR PRODUCTO</button>
+</div>
 
 @code {
+
+    public CUProductoRequestDTO miDto = new CUProductoRequestDTO();
+    public List<ProductoPrivadoDTO> productosBusqueda = new List<ProductoPrivadoDTO>();
+    private List<string> vistasPrevias = new List<string>();
+    private string terminoBusqueda = string.Empty;
+    private string busquedaState = string.Empty;
+
+
+    protected override void OnInitialized()
+    {
+        miDto.DTO = new ProductoPrivadoDTO();
+    }
+
+    public async Task BuscarProducto()
+    {
+        var response = await http.GetAsync<List<ProductoPrivadoDTO>>($"api/producto/admin");
+
+        var productos = response.Data;
+        
+        if(productos == null || !productos.Any())
+        {
+            await ChangeMessage("No se encontraron productos.");
+            productosBusqueda.Clear();
+            StateHasChanged();
+            return;
+        }
+
+        var esId = int.TryParse(terminoBusqueda, out var idBuscado);
+
+        var productosFiltrados = productos.Where(p =>
+            p.Nombre.Contains(terminoBusqueda, StringComparison.OrdinalIgnoreCase) ||
+            (esId && p.id == idBuscado)).ToList();
+        
+        if (productosFiltrados.Count == 0)
+        {
+            await ChangeMessage("No se encontraron productos con ese término.");
+        }
+        else
+        {
+            await ChangeMessage($"Se encontraron {productosFiltrados.Count} productos.");
+        }
+        productosBusqueda = productosFiltrados;
+        StateHasChanged();
+    }
+
+    public async Task ChangeMessage(string newMessage)
+    {
+         // Simula un retraso de 1 segundo
+        busquedaState = newMessage;
+        StateHasChanged();
+        await Task.Delay(1000);
+        busquedaState = string.Empty;
+        StateHasChanged();
+    }
+
+    private void CrearProducto()
+    {
+        // Aquí puedes implementar la lógica para enviar el DTO y las imágenes al servidor.
+        // Por ejemplo, podrías usar HttpClient para hacer una solicitud POST.
+        // Asegúrate de manejar la validación y los errores según sea necesario.
+    }
+
+    private void CargarArchivos()
+    {
+        // Aquí puedes implementar la lógica para manejar los archivos seleccionados.
+        // Por ejemplo, podrías leer los archivos y generar vistas previas.
+        // Asegúrate de limitar la cantidad de archivos a 5 y validar el tipo de archivo.
+        
+    }
+
+    
+
 }

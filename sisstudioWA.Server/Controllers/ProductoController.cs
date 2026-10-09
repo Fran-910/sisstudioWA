@@ -44,7 +44,7 @@ namespace sisstudioWA.Server.Controllers
         }
 
         [HttpGet("admin")]
-        public async Task<ActionResult<List<Producto>>> ListaProductosAdmin()
+        public async Task<ActionResult<List<ProductoPrivadoDTO>>> ListaProductosAdmin()
         {
             var productos = await repositorio.Select();
             return Ok(productos);
@@ -68,6 +68,7 @@ namespace sisstudioWA.Server.Controllers
         public async Task<ActionResult> CrearProducto(CUProductoRequestDTO DTO)//List<int>? idProductosComponentes)
         {
             Producto producto = new Producto();
+
             producto.Nombre = DTO.DTO.Nombre;
             producto.Subtitulo = DTO.DTO.Subtitulo;
             producto.Descripcion = DTO.DTO.Descripcion;
@@ -122,7 +123,7 @@ namespace sisstudioWA.Server.Controllers
         }
 
         [HttpPut("{id:int}")] // api/producto/{id}
-        public async Task<ActionResult<bool>> ActualizarProducto(int id, ProductoPrivadoDTO DTO)
+        public async Task<ActionResult<bool>> ActualizarProducto(ProductoPrivadoDTO DTO)
         {
             Producto productoActualizado = new Producto();
             productoActualizado.Nombre = DTO.Nombre;
@@ -133,7 +134,7 @@ namespace sisstudioWA.Server.Controllers
             productoActualizado.tipoProd = DTO.tipoProd;
             productoActualizado.Stock = DTO.Stock;
 
-            bool actualizado = await repositorio.Update(id, productoActualizado);
+            bool actualizado = await repositorio.Update(DTO.id, productoActualizado);
 
             if (actualizado)
             {
@@ -144,7 +145,7 @@ namespace sisstudioWA.Server.Controllers
 
         [HttpPut("kit/{id:int}")] // api/producto/kit/{id}
 
-        public async Task<ActionResult<bool>> ActualizarKit(int id, CUProductoRequestDTO DTO)
+        public async Task<ActionResult<bool>> ActualizarKit(CUProductoRequestDTO DTO)
         {
             Producto producto = new Producto();
             producto.Nombre = DTO.DTO.Nombre;
@@ -155,7 +156,7 @@ namespace sisstudioWA.Server.Controllers
             producto.tipoProd = DTO.DTO.tipoProd;
             producto.Stock = DTO.DTO.Stock;
 
-            if (id <= 0)
+            if (DTO.DTO.id <= 0)
             {
                 return BadRequest("El ID del producto es inválido.");
             }
@@ -164,7 +165,7 @@ namespace sisstudioWA.Server.Controllers
                 return BadRequest("Debe proporcionar al menos un ID de producto componente para actualizar un Kit.");
             }
 
-            bool actualizado = await repositorio.UpdateKit(id, producto, DTO.idProductosKit);
+            bool actualizado = await repositorio.UpdateKit(DTO.DTO.id, producto, DTO.idProductosKit);
 
             if (actualizado)
             {

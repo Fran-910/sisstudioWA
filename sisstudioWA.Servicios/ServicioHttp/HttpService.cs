@@ -24,7 +24,7 @@ namespace sisstudioWA.Servicios.ServicioHttp
                 if (response.IsSuccessStatusCode)
                 {
                     var data = await response.Content.ReadFromJsonAsync<T>();
-                    return new HttpResp<T>(false, string.Empty, data, response);
+                    return new HttpResp<T>(true, string.Empty, data, response);
                 }
                 else
                 {
@@ -33,7 +33,7 @@ namespace sisstudioWA.Servicios.ServicioHttp
             }
             catch (Exception e)
             {
-                return new HttpResp<T>(true, e.Message, default, null);
+                return new HttpResp<T>(false, e.Message, default, null);
             }
         }
 
@@ -46,16 +46,16 @@ namespace sisstudioWA.Servicios.ServicioHttp
                 if (response.IsSuccessStatusCode)
                 {
                     var data = await response.Content.ReadFromJsonAsync<T>();
-                    return new HttpResp<T>(false, string.Empty, data, response);   
+                    return new HttpResp<T>(true, string.Empty, data, response);   
                 }
                 else
                 {
-                    return new HttpResp<T>(true, string.Empty, default, response);
+                    return new HttpResp<T>(false, string.Empty, default, response);
                 }
             }
             catch (Exception e)
             {
-                return new HttpResp<T>(true, e.Message, default, null);
+                return new HttpResp<T>(false, e.Message, default, null);
             }
 
         }
@@ -68,16 +68,16 @@ namespace sisstudioWA.Servicios.ServicioHttp
                 if (response.IsSuccessStatusCode)
                 {
                     var responseData = await response.Content.ReadFromJsonAsync<TResp>();
-                    return new HttpResp<TResp>(false, string.Empty, responseData, response);
+                    return new HttpResp<TResp>(true, string.Empty, responseData, response);
                 }
                 else
                 {
-                    return new HttpResp<TResp>(true, string.Empty, default, response);
+                    return new HttpResp<TResp>(false, string.Empty, default, response);
                 }   
             }
             catch (Exception e)
             {
-                return new HttpResp<TResp>(true, e.Message, default, null);
+                return new HttpResp<TResp>(false, e.Message, default, null);
             }
         }
 
@@ -93,16 +93,16 @@ namespace sisstudioWA.Servicios.ServicioHttp
                     var responseData = await response.Content.ReadAsStringAsync();
                     var deserializedData = JsonSerializer.Deserialize<TResp>(responseData);
 
-                    return new HttpResp<TResp>(false, string.Empty, deserializedData, response);
+                    return new HttpResp<TResp>(true, string.Empty, deserializedData, response);
                 }
                 else
                 {
-                    return new HttpResp<TResp>(true, string.Empty, default, response);
+                    return new HttpResp<TResp>(false, string.Empty, default, response);
                 }
             }
             catch (Exception e)
             {
-                return new HttpResp<TResp>(true, e.Message, default, null);
+                return new HttpResp<TResp>(false, e.Message, default, null);
             }
         }
     }

@@ -30,6 +30,17 @@ builder.Services.AddScoped<IUsuarioRepositorio, UsuarioRepositorio>();
 
 var app = builder.Build();
 
+var productosPath = builder.Configuration["Storage:ProductosPath"]!;
+if (!Path.IsPathRooted(productosPath))
+    productosPath = Path.Combine(builder.Environment.ContentRootPath, productosPath);
+Directory.CreateDirectory(productosPath);
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(productosPath),
+    RequestPath = "/uploads"
+});
+
 #region Middleware
 
 if (!app.Environment.IsDevelopment())
