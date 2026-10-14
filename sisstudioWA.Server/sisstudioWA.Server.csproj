@@ -28,4 +28,8 @@
     <ProjectReference Include="..\sisstudioWA.Shared\sisstudioWA.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Storage\Productos\" />
+  </ItemGroup>
+
 </Project>

@@ -1,0 +1,533 @@
+@using System.Text.Json
+@using sisstudioWA.Servicios.ServicioHttp
+@using sisstudioWA.Shared.DTO
+@using sisstudioWA.Shared.Enum
+@inject IHttpService http
+
+@if (Visible)
+{
+    <div class="vp-modal-overlay" @onclick="CerrarPorOverlay">
+        <div class="vp-modal-card" role="dialog" aria-modal="true" aria-label="Ver Producto" tabindex="0" @ref="panelRef" @onkeydown="ManejarTecla" @onclick:stopPropagation="true">
+            <div class="vp-modal-header">
+                <h3>Ver Producto</h3>
+                <button type="button" class="vp-modal-close" @onclick="Cerrar" aria-label="Cerrar">&#10005;</button>
+            </div>
+
+            <div class="vp-modal-body">
+                @if (Producto is null)
+                {
+                    <p>No se seleccionó ningún producto.</p>
+                }
+                else
+                {
+                    @if (editarMode == true)
+
+                    {
+                        @if (Producto.tipoProd == TipoProd.Producto)
+                        {
+                            <p>Modo de edición activado. Aquí puedes agregar un formulario para editar el producto.</p>
+                            <!-- Aquí podrías agregar un formulario para editar el producto -->
+                            <input type="text" @bind="DTO.DTO.Nombre" placeholder="@Producto.Nombre" />
+                            <input type="text" @bind="DTO.DTO.Subtitulo" placeholder="@Producto.Subtitulo" />
+                            <input type="text" @bind="DTO.DTO.Descripcion" placeholder="@Producto.Descripcion" />
+                            <input type="number" @bind="DTO.DTO.Precio" placeholder="@Producto.Precio" />
+                            <input type="number" @bind="DTO.DTO.Stock" placeholder="@Producto.Stock" />
+
+                            @if (DTO.DTO.Imagenes != null && DTO.DTO.Imagenes.Any())
+                            {
+                                <p>Imagenes: @DTO.DTO.Imagenes.Count()</p>
+                                @foreach (var img in DTO.DTO.Imagenes)
+                                {
+                                    <img src="@img" alt="Imagen del producto" style="max-width: 100px; max-height: 100px;" />
+                                    <button @onclick="@(() => RemoverImagenDTO(img))">-</button>
+                                }
+                            }
+
+                            @if (imagenesSeleccionadas != null && imagenesSeleccionadas.Any())
+                            {
+                                <p>Imagenes nuevas: @imagenesSeleccionadas.Count()</p>
+                                @foreach (var img in imagenesSeleccionadas)
+                                {
+                                    <img src="@img.url" alt="Imagen del producto" style="max-width: 100px; max-height: 100px;" />
+                                    <button @onclick="@(() => RemoverImagen(img.Id))">-</button>
+                                }
+                            }
+
+                            <InputFile OnChange="CargarImagenes" multiple accept="image/png, image/jpeg, image/webp" class="form-control" />
+                        }
+                        else
+                        {
+                            <p>Modo de edición activado. Aquí puedes agregar un formulario para editar el producto.</p>
+                            <!-- Aquí podrías agregar un formulario para editar el producto -->
+                            <input type="text" @bind="DTO.DTO.Nombre" placeholder="@Producto.Nombre" />
+                            <input type="text" @bind="DTO.DTO.Subtitulo" placeholder="@Producto.Subtitulo" />
+                            <input type="text" @bind="DTO.DTO.Descripcion" placeholder="@Producto.Descripcion" />
+                            <input type="number" @bind="DTO.DTO.Precio" placeholder="@Producto.Precio" />
+                            <input type="number" @bind="DTO.DTO.Stock" placeholder="@Producto.Stock" />
+
+
+                            @if (DTO.DTO.Imagenes != null && DTO.DTO.Imagenes.Any())
+                            {
+                                <p>Imagenes: @DTO.DTO.Imagenes.Count()</p>
+                                @foreach (var img in DTO.DTO.Imagenes)
+                                {
+                                    <img src="@img" alt="Imagen del producto" style="max-width: 100px; max-height: 100px;" />
+                                    <button @onclick="@(() => RemoverImagenDTO(img))">-</button>
+                                }
+                            }
+
+                            @if (imagenesSeleccionadas != null && imagenesSeleccionadas.Any())
+                            {
+                                <p>Imagenes nuevas: @imagenesSeleccionadas.Count()</p>
+                                @foreach (var img in imagenesSeleccionadas)
+                                {
+                                    <img src="@img.url" alt="Imagen del producto" style="max-width: 100px; max-height: 100px;" />
+                                    <button @onclick="@(() => RemoverImagen(img.Id))">-</button>
+                                }
+                            }
+
+                            <InputFile OnChange="CargarImagenes" multiple accept="image/png, image/jpeg, image/webp" class="form-control" />
+
+                            <div class="vp-kit-section">
+                                <p class="vp-kit-title">Productos del Kit</p>
+                                @if (productosComponentes != null && productosComponentes.Any())
+                                {
+                                    <ul class="vp-kit-list">
+                                        @foreach(var item in resultadosProcesados)
+                                        {
+                                            <li class="vp-kit-item" @key="item.Id">
+                                                <span class="vp-kit-meta">@item.Id</span>
+                                                <span class="vp-kit-name">Nombre: @item.Nombre</span>
+                                                <span class="vp-kit-price">Precio Unidad: @item.Precio</span>
+                                                <span class="vp-kit-qty">Cantidad:</span>
+                                                <input class="vp-kit-input" @bind="item.CantItems" type="number" placeholder="Cantidad" />
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+                                else
+                                {
+                                    <p class="vp-kit-empty">Sin componentes.</p>
+                                }
+                            </div>
+
+                            <div class="kit-section">
+                                <h4>Agregar Productos al Kit</h4>
+                                <form @onsubmit="BuscarProducto" @onsubmit:preventDefault="true">
+                                    <input type="search" @bind="terminoBusqueda" placeholder="Buscar producto por nombre o ID..." class="form-control" />
+                                </form>
+
+                                @if (productosBusqueda.Count == 0 && !string.IsNullOrWhiteSpace(terminoBusqueda))
+                                {
+                                    <p>@busquedaState</p>
+                                }
+                                else
+                                {
+                                    <p>@busquedaState</p>
+                                    @foreach (var producto in productosBusqueda)
+                                    {
+                                        <div>
+                                            <label>
+                                                <p>Id: @producto.id</p>
+                                                <p>Nombre: @producto.Nombre</p>
+                                                <p>Precio: @producto.Precio</p>
+                                                <p>Cantidad: @currentCantProd</p>
+                                                <input @bind="currentCantProd" type="number" placeholder="Cantidad" />
+                                                <button @onclick="(() => AddToProd(producto.id, currentCantProd))">Add</button>
+                                            </label>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        }
+
+                        <button @onclick="Cerrar">Deshacer</button>
+                        <button @onclick="AplicarCambios">Aplicar</button>
+                    }
+                    else
+                    {
+                        @if (Producto.tipoProd == TipoProd.Producto)
+                        {
+                            <p>Detalles del producto:</p>
+                            <p>@Producto.Nombre</p>
+                            <p>@Producto.Subtitulo</p>
+                            <p>@Producto.Descripcion</p>
+                            <p>@Producto.Precio</p>
+                            <p>@Producto.Stock</p>
+
+                            @if (Producto.Imagenes != null && Producto.Imagenes.Any())
+                            {
+                                <p>Imagenes: @Producto.Imagenes.Count()</p>
+                                @foreach (var img in Producto.Imagenes)
+                                {
+
+                                    <img src="@img" alt="Imagen del producto" style="max-width: 100px; max-height: 100px;" />
+                                }
+                            }
+
+                            <button @onclick="Editar">Editar</button>
+                        }
+                        else
+                        {
+                            <p>Detalles del producto:</p>
+                            <p>Nombre: @Producto.Nombre</p>
+                            <p>Subtitulo: @Producto.Subtitulo</p>
+                            <p>Descripción: @Producto.Descripcion</p>
+                            <p>Precio: @Producto.Precio</p>
+                            <p>Stock: @Producto.Stock</p>
+
+                            @if (Producto.Imagenes != null && Producto.Imagenes.Any())
+                            {
+                                <p>Imagenes: @Producto.Imagenes.Count()</p>
+                                @foreach (var img in Producto.Imagenes)
+                                {
+
+                                    <img src="@img" alt="Imagen del producto" style="max-width: 100px; max-height: 100px;" />
+                                }
+                            }
+
+                            <div class="vp-kit-section">
+                                <p class="vp-kit-title">Productos del Kit</p>
+                                @if (productosComponentes != null && productosComponentes.Any())
+                                {
+                                    <ul class="vp-kit-list">
+                                        @foreach (var item in resultadosProcesados )
+                                        {
+                                            <li class="vp-kit-item" @key="item.Id">
+                                                <span class="vp-kit-name">@item.Id</span>
+                                                <span class="vp-kit-name">Nombre: @item.Nombre</span>
+                                                <span class="vp-kit-name">Precio Unidad: @item.Precio</span>
+                                                <span class="vp-kit-meta">Cantidad: @item.CantItems</span>
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+                                else
+                                {
+                                    <p class="vp-kit-empty">Sin componentes.</p>
+                                }
+                            </div>
+
+                            <button @onclick="Editar">Editar</button>
+                        }
+
+                    }
+                }
+            </div>
+
+            <div class="vp-modal-footer">
+                <button class="btn btn-secondary" @onclick="Cerrar">Cerrar</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+    [Parameter] public ProductoPrivadoDTO? Producto { get; set; }
+    [Parameter] public EventCallback OnActualizado { get; set; }
+
+    public CUProductoRequestDTO DTO;
+    public List<string> imgParaBorrar = new List<string>();
+    public List<ImagenSeleccionada> imagenesSeleccionadas = new List<ImagenSeleccionada>();
+    private long maxFileSize = 1024 * 1024 * 5;
+    public List<ProductoPrivadoDTO> productosComponentes = new List<ProductoPrivadoDTO>();
+    private List<KitProdModelDTO> resultadosProcesados = new List<KitProdModelDTO>();
+
+    private List<ProductoPrivadoDTO> productosBusqueda = new List<ProductoPrivadoDTO>();
+    public int currentCantProd = 1;
+    private string terminoBusqueda = string.Empty;
+    private string busquedaState = string.Empty;
+
+    private ElementReference panelRef;
+    private bool estabaVisible;
+    private bool focoAplicado;
+
+    private bool editarMode = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Visible && !estabaVisible)
+        {
+            focoAplicado = false;
+        }
+        estabaVisible = Visible;
+
+        if (!Visible)
+        {
+            return;
+        }
+
+        if (Producto != null)
+        {
+            if(Producto.tipoProd == TipoProd.Kit)
+            {
+                productosComponentes = new List<ProductoPrivadoDTO>();
+
+                await CargarKitProductos();
+
+            }
+        }
+
+    }
+
+    private async Task CargarKitProductos()
+    {
+        productosComponentes = new List<ProductoPrivadoDTO>();
+        resultadosProcesados.Clear();
+
+        var response = await http.GetAsync<List<ProductoPrivadoDTO>>($"api/producto/kit/{Producto.id}");
+        if (response.IsSuccess && response.Data != null)
+        {
+            productosComponentes = response.Data;
+
+            resultadosProcesados = productosComponentes
+            .GroupBy(p => p.id)
+            .Select(grupo => new KitProdModelDTO()
+            {
+                Id = grupo.Key,
+                Nombre = grupo.First().Nombre,
+                Precio = grupo.First().Precio,
+                CantItems = grupo.Count()
+            }).ToList();
+
+            StateHasChanged();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Visible && !focoAplicado)
+        {
+            try
+            {
+                await panelRef.FocusAsync();
+                focoAplicado = true;
+            }
+            catch (InvalidOperationException)
+            {
+            }
+        }
+    }
+
+    private async Task CargarImagenes(InputFileChangeEventArgs e)
+    {
+        foreach (var image in e.GetMultipleFiles(5))
+        {
+            if (image.Size > maxFileSize)
+            {
+                continue;
+            }
+            using var stream = image.OpenReadStream(maxFileSize);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            var base64 = Convert.ToBase64String(ms.ToArray());
+            var imgUrl = $"data:{image.ContentType};base64,{base64}";
+            imagenesSeleccionadas.Add(new()
+            {
+                url = imgUrl,
+                archivo = image
+            });
+        }
+
+        StateHasChanged();
+    }
+
+    public async Task BuscarProducto()
+    {
+        var response = await http.GetAsync<List<ProductoPrivadoDTO>>($"api/producto/admin");
+
+        var productos = response.Data;
+
+        if (productos == null || !productos.Any())
+        {
+            await ChangeMessage("No se encontraron productos.");
+            productosBusqueda.Clear();
+            StateHasChanged();
+            return;
+        }
+
+        var esId = int.TryParse(terminoBusqueda, out var idBuscado);
+
+        var productosFiltrados = productos.Where(p =>
+            p.Nombre.Contains(terminoBusqueda, StringComparison.OrdinalIgnoreCase) ||
+            (esId && p.id == idBuscado)).ToList();
+
+        if (productosFiltrados.Count == 0)
+        {
+            await ChangeMessage("No se encontraron productos con ese término.");
+        }
+        else
+        {
+            await ChangeMessage($"Se encontraron {productosFiltrados.Count} productos.");
+        }
+        productosBusqueda = productosFiltrados;
+        StateHasChanged();
+    }
+
+    public async Task ChangeMessage(string newMessage)
+    {
+        busquedaState = newMessage;
+        StateHasChanged();
+        await Task.Delay(1000);
+        busquedaState = string.Empty;
+        StateHasChanged();
+    }
+
+    private void AddToProd(int id, int cant)
+    {
+        var prod = productosBusqueda.FirstOrDefault(p => p.id == id);
+        if (prod == null)
+        {
+            return;
+        }
+
+        var existente = resultadosProcesados.FirstOrDefault(r => r.Id == id);
+        if (existente == null)
+        {
+            resultadosProcesados.Add(new KitProdModelDTO()
+            {
+                Id = prod.id,
+                Nombre = prod.Nombre,
+                Precio = prod.Precio,
+                CantItems = Math.Max(1, cant)
+            });
+        }
+        else
+        {
+            existente.CantItems += Math.Max(1, cant);
+        }
+
+        productosBusqueda.Clear();
+        terminoBusqueda = string.Empty;
+        busquedaState = string.Empty;
+        StateHasChanged();
+    }
+
+    private void RemoverImagen(string id)
+
+    {
+
+        imagenesSeleccionadas.RemoveAll(p => p.Id == id);
+
+        StateHasChanged();
+    }
+
+    private void RemoverImagenDTO(string img)
+    {
+        if (DTO?.DTO?.Imagenes != null)
+        {
+            if (DTO.DTO.Imagenes.Contains(img))
+            {
+                imgParaBorrar.Add(img);
+                DTO.DTO.Imagenes.Remove(img);
+            }
+
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task Cerrar()
+    {
+        editarMode = false;
+        focoAplicado = false;
+        productosComponentes = new List<ProductoPrivadoDTO>();
+        imagenesSeleccionadas.Clear();
+        await VisibleChanged.InvokeAsync(false);
+    }
+
+    private async Task CerrarPorOverlay()
+    {
+        await Cerrar();
+    }
+
+    private async Task ManejarTecla(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            await Cerrar();
+        }
+    }
+
+    private async Task AplicarCambios()
+    {
+        var url = string.Empty;
+        if (DTO.DTO.tipoProd == Shared.Enum.TipoProd.Kit)
+        {
+            url = $"api/producto/kit/{DTO.DTO.id}";
+        }
+        else
+        {
+            url = $"api/producto/{DTO.DTO.id}";
+        }
+
+        var delurl = $"api/producto/delimg";
+
+
+        var formData = new MultipartFormDataContent();
+
+        @foreach (var img in imagenesSeleccionadas)
+        {
+            var streamContent = new StreamContent(img.archivo.OpenReadStream(maxFileSize));
+            streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(img.archivo.ContentType);
+            formData.Add(streamContent, "imagenes", img.archivo.Name);
+        }
+
+
+        var imageDTO = new ImageDelDTO();
+        imageDTO.id = DTO.DTO.id;
+        imageDTO.url = imgParaBorrar;
+
+        var imgdtoJson = JsonSerializer.Serialize(imageDTO);
+        var responseDel = await http.DeleteImg(delurl, imgdtoJson);
+
+        foreach(var kitProd in resultadosProcesados)
+        {
+            for(int i = 0; i < kitProd.CantItems; i++)
+            {
+                DTO.idProductosKit.Add(kitProd.Id);
+            }
+        }
+        var stringContent = new StringContent(JsonSerializer.Serialize(DTO));
+        formData.Add(stringContent, "producto");
+
+        var response = await http.UpdateFormDataAsync(url, formData);
+
+        if (response)
+        {
+            Console.WriteLine("Update done.");
+
+        }
+        else
+        {
+            Console.WriteLine("Update gone wrong.");
+        }
+        await CargarKitProductos();
+        await OnActualizado.InvokeAsync();
+        StateHasChanged();
+        await Cerrar();
+    }
+
+    private void Editar()
+    {
+        DTO = new CUProductoRequestDTO
+        {
+            DTO = new ProductoPrivadoDTO
+            {
+                id = this.Producto!.id,
+                Nombre = this.Producto!.Nombre,
+                Subtitulo = this.Producto!.Subtitulo,
+                Descripcion = this.Producto!.Descripcion,
+                Precio = this.Producto!.Precio,
+                Stock = this.Producto!.Stock,
+                tipoProd = this.Producto!.tipoProd,
+                Imagenes = new List<string>(this.Producto!.Imagenes ?? new List<string>())
+            }
+        };
+        editarMode = true;
+        StateHasChanged();
+    }
+
+}

@@ -8,7 +8,10 @@ namespace sisstudioWA.Servicios.ServicioHttp
     {
         Task<HttpResp<T>> GetAsync<T>(string url);
         Task<HttpResp<TResp>> PostAsync<T, TResp>(string url, T data);
+        Task<bool> PostFormDataAsync(string url, MultipartFormDataContent data);
+        Task<bool> UpdateFormDataAsync(string url, MultipartFormDataContent data);
         Task<HttpResp<TResp>> PutAsync<T, TResp>(string url, T data);
-        Task<HttpResp<T>> DeleteAsync<T>(string url);   
+        Task<HttpResp<T>> DeleteAsync<T>(string url);
+        Task<bool> DeleteImg(string url, string imgdtoJson);
     }
 }

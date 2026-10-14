@@ -6,6 +6,8 @@ using sisstudioWA.BD.Datos.Entity;
 using sisstudioWA.Repositorio.Repositorios;
 using sisstudioWA.Shared.DTO;
 using sisstudioWA.Shared.Enum;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace sisstudioWA.Server.Controllers
 {
@@ -17,7 +19,7 @@ namespace sisstudioWA.Server.Controllers
         private readonly IWebHostEnvironment environment;
         private readonly IConfiguration configuration;
 
-        public ProductoController(IProductoRepositorio repositorio ,IWebHostEnvironment env, IConfiguration config)
+        public ProductoController(IProductoRepositorio repositorio, IWebHostEnvironment env, IConfiguration config)
         {
             this.repositorio = repositorio;
             this.environment = env;
@@ -70,74 +72,78 @@ namespace sisstudioWA.Server.Controllers
         }
 
         [HttpPost("crear")] // api/producto
-        public async Task<ActionResult> CrearProducto([FromForm] IFormFileCollection imagenes, [FromForm] CUProductoRequestDTO DTO)//List<int>? idProductosComponentes)
+        public async Task<ActionResult> CrearProducto([FromForm] IFormFileCollection imagenes, [FromForm] string producto)//List<int>? idProductosComponentes)
         {
+            if (string.IsNullOrEmpty(producto))
+            {
+                return BadRequest("El parámetro 'producto' no puede estar vacío.");
+            }
+            var DTO = JsonSerializer.Deserialize<CUProductoRequestDTO>(producto, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                Converters = { new JsonStringEnumConverter() }
+            });
+            if (DTO?.DTO == null) return BadRequest("Datos del producto inválidos.");
 
-            Producto producto = new Producto();
 
-            producto.Nombre = DTO.DTO.Nombre;
-            producto.Subtitulo = DTO.DTO.Subtitulo;
-            producto.Descripcion = DTO.DTO.Descripcion;
-            producto.Imagenes = DTO.DTO.Imagenes;
-            producto.Precio = DTO.DTO.Precio;
-            producto.tipoProd = DTO.DTO.tipoProd;
-            producto.Stock = DTO.DTO.Stock;
+            Producto prod = new Producto();
 
-            var path = configuration["Storage:ProductosPath"];
+            prod.Nombre = DTO.DTO.Nombre;
+            prod.Subtitulo = DTO.DTO.Subtitulo;
+            prod.Descripcion = DTO.DTO.Descripcion;
+            prod.Precio = DTO.DTO.Precio;
+            prod.tipoProd = DTO.DTO.tipoProd;
+            prod.Stock = DTO.DTO.Stock;
+
+            var path = GetStorageRoot();
             var rutasWeb = new List<string>();
-            if (!Path.IsPathRooted(path))
-            {
-                path = Path.Combine(environment.ContentRootPath, path);
-            }
 
-            foreach (var img in imagenes)
-            {
-                if (img.Length > 0)
-                {
-                    // Aquí puedes realizar validaciones adicionales si es necesario
-                    // Por ejemplo, verificar el tipo de archivo, tamaño máximo, etc.
-                    var extension = Path.GetExtension(img.FileName);
-                    var prodFolder = Path.Combine(path, producto.Nombre);
-                    Directory.CreateDirectory(prodFolder);
-                    var nombreArchivo = $"{producto.Nombre}_{Guid.NewGuid().ToString()}{extension}";
-                    var rutaArchivo = Path.Combine(prodFolder, nombreArchivo);
 
-                    using (var stream = new FileStream(rutaArchivo, FileMode.Create))
-                    {
-                        await img.CopyToAsync(stream);
-                    }
-
-                    var rutaWeb = $"/uploads/{producto.Nombre}/{nombreArchivo}";
-                    rutasWeb.Add(rutaWeb);
-                }
-                else
-                {
-                    return BadRequest("Uno o más archivos de imagen están vacíos.");
-                }
-            }
-
-            if(rutasWeb.Count > 0)
+            if (DTO.DTO.tipoProd == TipoProd.Producto)
             {
-                producto.Imagenes = rutasWeb.ToArray();
-            }
-            else
-            {
-                return BadRequest("No se proporcionaron imágenes válidas para el producto.");
-            }
-
-            if (producto.tipoProd == TipoProd.Producto)
-            {
-                bool resultado = await repositorio.Insert(producto);
+                bool resultado = await repositorio.Insert(prod);
                 if (resultado)
                 {
-                    return Ok("Producto creado exitosamente");
+                    foreach (var img in imagenes)
+                    {
+                        if (img.Length > 0)
+                        {
+                            var extension = Path.GetExtension(img.FileName);
+                            var prodFolder = Path.Combine(path, prod.Id.ToString());
+                            Directory.CreateDirectory(prodFolder);
+                            var nombreArchivo = $"{DTO.DTO.Nombre}_{Guid.NewGuid().ToString()}{extension}";
+                            var rutaArchivo = Path.Combine(prodFolder, nombreArchivo);
+
+                            using (var stream = new FileStream(rutaArchivo, FileMode.Create))
+                            {
+                                await img.CopyToAsync(stream);
+                            }
+
+                            var rutaWeb = $"/uploads/{prod.Id}/{nombreArchivo}";
+                            rutasWeb.Add(rutaWeb);
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                    }
+
+                    prod.Imagenes = rutasWeb;
+
+                    bool addImgs = await repositorio.Update(prod.Id, prod);
+                    if (addImgs)
+                    {
+                        return Ok("Producto creado exitosamente");
+                    }
+
+                    return BadRequest("Error al crear el producto");
                 }
                 else
                 {
-                    return BadRequest("Error al crear el producto");
+                    return BadRequest("Error al crear el producto, no res");
                 }
             }
-            else if (producto.tipoProd == TipoProd.Kit)
+            else if (DTO.DTO.tipoProd == TipoProd.Kit)
             {
 
                 foreach (var id in DTO.idProductosKit ?? new List<int>())
@@ -156,14 +162,47 @@ namespace sisstudioWA.Server.Controllers
                 }
                 else
                 {
-                    bool resultado = await repositorio.InsertKit(producto, DTO.idProductosKit);
+                    bool resultado = await repositorio.InsertKit(prod, DTO.idProductosKit);
                     if (resultado)
                     {
-                        return Ok("Producto creado exitosamente");
+                        foreach (var img in imagenes)
+                        {
+                            if (img.Length > 0)
+                            {
+                                var extension = Path.GetExtension(img.FileName);
+                                var prodFolder = Path.Combine(path, prod.Id.ToString());
+                                Directory.CreateDirectory(prodFolder);
+                                var nombreArchivo = $"{DTO.DTO.Nombre}_{Guid.NewGuid().ToString()}{extension}";
+                                var rutaArchivo = Path.Combine(prodFolder, nombreArchivo);
+
+                                using (var stream = new FileStream(rutaArchivo, FileMode.Create))
+                                {
+                                    await img.CopyToAsync(stream);
+                                }
+
+                                var rutaWeb = $"/uploads/{prod.Id}/{nombreArchivo}";
+                                rutasWeb.Add(rutaWeb);
+                            }
+                                else
+                                {
+                                    continue;
+                                }
+                            }
+
+                            prod.Imagenes = rutasWeb;
+
+
+                        bool addImgs = await repositorio.Update(prod.Id, prod);
+                        if (addImgs)
+                        {
+                            return Ok("Producto creado exitosamente");
+                        }
+
+                        return BadRequest("Error al crear el producto, kit");
                     }
                     else
                     {
-                        return BadRequest("Error al crear el producto");
+                        return BadRequest("Error al crear el producto, reskit");
                     }
                 }
             }
@@ -171,18 +210,61 @@ namespace sisstudioWA.Server.Controllers
         }
 
         [HttpPut("{id:int}")] // api/producto/{id}
-        public async Task<ActionResult<bool>> ActualizarProducto(ProductoPrivadoDTO DTO)
+        public async Task<ActionResult<bool>> ActualizarProducto([FromForm] IFormFileCollection imagenes, [FromForm] string producto)
         {
-            Producto productoActualizado = new Producto();
-            productoActualizado.Nombre = DTO.Nombre;
-            productoActualizado.Subtitulo = DTO.Subtitulo;
-            productoActualizado.Descripcion = DTO.Descripcion;
-            productoActualizado.Imagenes = DTO.Imagenes;
-            productoActualizado.Precio = DTO.Precio;
-            productoActualizado.tipoProd = DTO.tipoProd;
-            productoActualizado.Stock = DTO.Stock;
+            if (string.IsNullOrEmpty(producto))
+            {
+                return BadRequest("El parámetro 'producto' no puede estar vacío.");
+            }
+            var DTO = JsonSerializer.Deserialize<CUProductoRequestDTO>(producto, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                Converters = { new JsonStringEnumConverter() }
+            });
+            if (DTO?.DTO == null) return BadRequest("Datos del producto inválidos.");
 
-            bool actualizado = await repositorio.Update(DTO.id, productoActualizado);
+            Producto productoActualizado = new Producto();
+            productoActualizado.Nombre = DTO.DTO.Nombre;
+            productoActualizado.Subtitulo = DTO.DTO.Subtitulo;
+            productoActualizado.Descripcion = DTO.DTO.Descripcion;
+            productoActualizado.Imagenes = DTO.DTO.Imagenes;
+            productoActualizado.Precio = DTO.DTO.Precio;
+            productoActualizado.tipoProd = DTO.DTO.tipoProd;
+            productoActualizado.Stock = DTO.DTO.Stock;
+
+            var path = GetStorageRoot();
+
+            var rutasWeb = new List<string>();
+            rutasWeb.AddRange(DTO.DTO.Imagenes ?? new List<string>());
+
+            foreach (var img in imagenes)
+            {
+                if (img.Length > 0)
+                {
+                    var extension = Path.GetExtension(img.FileName);
+                    var prodFolder = Path.Combine(path, DTO.DTO.id.ToString());
+                    Directory.CreateDirectory(prodFolder);
+                    var nombreArchivo = $"{DTO.DTO.Nombre}_{Guid.NewGuid().ToString()}{extension}";
+                    var rutaArchivo = Path.Combine(prodFolder, nombreArchivo);
+
+                    using (var stream = new FileStream(rutaArchivo, FileMode.Create))
+                    {
+                        await img.CopyToAsync(stream);
+                    }
+
+                    var rutaWeb = $"/uploads/{DTO.DTO.id}/{nombreArchivo}";
+                    rutasWeb.Add(rutaWeb);
+                }
+                else
+                {
+                    return BadRequest("Uno o más archivos de imagen están vacíos.");
+                }
+            }
+
+            productoActualizado.Imagenes = rutasWeb;
+
+
+            bool actualizado = await repositorio.Update(DTO.DTO.id, productoActualizado);
 
             if (actualizado)
             {
@@ -193,27 +275,69 @@ namespace sisstudioWA.Server.Controllers
 
         [HttpPut("kit/{id:int}")] // api/producto/kit/{id}
 
-        public async Task<ActionResult<bool>> ActualizarKit(CUProductoRequestDTO DTO)
+        public async Task<ActionResult<bool>> ActualizarKit([FromForm] IFormFileCollection imagenes, [FromForm] string producto)
         {
-            Producto producto = new Producto();
-            producto.Nombre = DTO.DTO.Nombre;
-            producto.Subtitulo = DTO.DTO.Subtitulo;
-            producto.Descripcion = DTO.DTO.Descripcion;
-            producto.Imagenes = DTO.DTO.Imagenes;
-            producto.Precio = DTO.DTO.Precio;
-            producto.tipoProd = DTO.DTO.tipoProd;
-            producto.Stock = DTO.DTO.Stock;
+
+            if (string.IsNullOrEmpty(producto))
+            {
+                return BadRequest("El parámetro 'producto' no puede estar vacío.");
+            }
+            var DTO = JsonSerializer.Deserialize<CUProductoRequestDTO>(producto, new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                Converters = { new JsonStringEnumConverter() }
+            });
+            if (DTO?.DTO == null) return BadRequest("Datos del producto inválidos.");
+
+            Producto productoActualizado = new Producto();
+            productoActualizado.Nombre = DTO.DTO.Nombre;
+            productoActualizado.Subtitulo = DTO.DTO.Subtitulo;
+            productoActualizado.Descripcion = DTO.DTO.Descripcion;
+            productoActualizado.Imagenes = DTO.DTO.Imagenes;
+            productoActualizado.Precio = DTO.DTO.Precio;
+            productoActualizado.tipoProd = DTO.DTO.tipoProd;
+            productoActualizado.Stock = DTO.DTO.Stock;
+
+            var path = GetStorageRoot();
+            var rutasWeb = new List<string>();
+            rutasWeb.AddRange(DTO.DTO.Imagenes ?? new List<string>());
+
+            foreach (var img in imagenes)
+            {
+                if (img.Length > 0)
+                {
+                    var extension = Path.GetExtension(img.FileName);
+                    var prodFolder = Path.Combine(path, DTO.DTO.id.ToString());
+                    Directory.CreateDirectory(prodFolder);
+                    var nombreArchivo = $"{DTO.DTO.Nombre}_{Guid.NewGuid().ToString()}{extension}";
+                    var rutaArchivo = Path.Combine(prodFolder, nombreArchivo);
+
+                    using (var stream = new FileStream(rutaArchivo, FileMode.Create))
+                    {
+                        await img.CopyToAsync(stream);
+                    }
+
+                    var rutaWeb = $"/uploads/{DTO.DTO.id}/{nombreArchivo}";
+                    rutasWeb.Add(rutaWeb);
+                }
+                else
+                {
+                    return BadRequest("Uno o más archivos de imagen están vacíos.");
+                }
+            }
+
+            productoActualizado.Imagenes = rutasWeb;
 
             if (DTO.DTO.id <= 0)
             {
                 return BadRequest("El ID del producto es inválido.");
             }
-            if(DTO.idProductosKit == null || DTO.idProductosKit.Count == 0 || DTO.idProductosKit.Any(x => x <= 0))
+            if (DTO.idProductosKit == null || DTO.idProductosKit.Count == 0 || DTO.idProductosKit.Any(x => x <= 0))
             {
                 return BadRequest("Debe proporcionar al menos un ID de producto componente para actualizar un Kit.");
             }
 
-            bool actualizado = await repositorio.UpdateKit(DTO.DTO.id, producto, DTO.idProductosKit);
+            bool actualizado = await repositorio.UpdateKit(DTO.DTO.id, productoActualizado, DTO.idProductosKit);
 
             if (actualizado)
             {
@@ -223,15 +347,23 @@ namespace sisstudioWA.Server.Controllers
             {
                 return BadRequest("Error al actualizar el kit: " + actualizado);
             }
-
-
         }
 
-        [HttpDelete("{id:int}")] // api/producto/{id}
+        [HttpDelete("borrar/{id:int}")] // api/producto/borrar/{id}
         public async Task<ActionResult<bool>> DeleteProducto(int id)
         {
-            bool eliminado = await repositorio.Delete(id);
-            return Ok(eliminado);
+            bool eliminado = await repositorio.DeleteProd(id);
+            var storagePath = GetStorageRoot();
+            var productFolder = Path.Combine(storagePath, id.ToString());
+            if (eliminado)
+            {
+                if (Directory.Exists(productFolder))
+                {
+                    Directory.Delete(productFolder, true);
+                }
+                return Ok(eliminado);
+            }
+            return BadRequest(eliminado);
         }
 
         [HttpGet("kit/{id:int}")] // api/producto/kit/{id}
@@ -246,6 +378,54 @@ namespace sisstudioWA.Server.Controllers
             {
                 return NotFound("No se encontraron productos para el kit con el ID proporcionado");
             }
+        }
+
+        [HttpDelete("delimg")]
+
+        public async Task<ActionResult<bool>> DeleteImagen([FromBody] ImageDelDTO imgDelDto)
+        {
+
+            var path = GetStorageRoot();
+
+            if (!(imgDelDto != null && imgDelDto.id > 0 && imgDelDto.url != null))
+            {
+                return BadRequest(false);
+            }
+
+            var prod = await repositorio.SelectById(imgDelDto.id);
+
+            foreach (var img in imgDelDto.url)
+            {
+                var prodImgExist = await repositorio.GetProdImg(prod.Id, img);
+
+                if (prodImgExist != null)
+                {
+                    var productoPath = Path.Combine(path, prod.Id.ToString());
+                    var nombreArchivo = Path.GetFileName(img);
+                    var rutaFisicaCompleta = Path.Combine(productoPath, nombreArchivo);
+                    if (Directory.Exists(productoPath))
+                    {
+                        if (System.IO.File.Exists(rutaFisicaCompleta))
+                        {
+                            System.IO.File.Delete(rutaFisicaCompleta);
+                        }
+                    }
+                    prod.Imagenes.Remove(img);
+                }
+                else
+                {
+                    return BadRequest(false);
+                }
+            }
+
+            await repositorio.Update(prod.Id, prod);
+            return Ok(true);
+        }
+
+        private string GetStorageRoot()
+        {
+            var path = configuration["Storage:ProductosPath"];
+            return Path.IsPathRooted(path) ? path : Path.Combine(environment.ContentRootPath, path);
         }
     }
 }

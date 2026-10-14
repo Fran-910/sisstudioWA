@@ -12,8 +12,8 @@ using sisstudioWA.BD.Datos;
 namespace sisstudioWA.BD.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261008000456_Inicio")]
-    partial class Inicio
+    [Migration("20261009193450_ImagenesNullable")]
+    partial class ImagenesNullable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -194,7 +194,6 @@ namespace sisstudioWA.BD.Migrations
                         .HasColumnType("nvarchar(250)");
 
                     b.PrimitiveCollection<string>("Imagenes")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Nombre")

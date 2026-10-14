@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using sisstudioWA.BD.Datos;
 using sisstudioWA.BD.Datos.Entity;
+using sisstudioWA.Shared.DTO;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -84,11 +85,11 @@ namespace sisstudioWA.Repositorio.Repositorios
             }
         }
 
-        public async Task<List<Producto>> GetProductosKitById(int id)
+        public async Task<List<ProductoPrivadoDTO>> GetProductosKitById(int id)
         {
             var productoKit = await _context.KitsProductos.Where(kp => kp.KitId == id).ToListAsync();
 
-            var productos = new List<Producto>();
+            var productos = new List<ProductoPrivadoDTO>();
 
             if (productoKit != null && productoKit.Count > 0)
             {
@@ -106,7 +107,18 @@ namespace sisstudioWA.Repositorio.Repositorios
 
                 if (producto != null)
                 {
-                    productos.Add(producto);
+                    var ppDTO = new ProductoPrivadoDTO()
+                    {
+                        id = producto.Id,
+                        Nombre = producto.Nombre,
+                        Subtitulo = producto.Subtitulo,
+                        Descripcion = producto.Descripcion,
+                        Imagenes = producto.Imagenes,
+                        Precio = producto.Precio,
+                        Stock = producto.Stock,
+                        tipoProd = producto.tipoProd
+                    };
+                    productos.Add(ppDTO);
                 }
             }
 
@@ -117,6 +129,83 @@ namespace sisstudioWA.Repositorio.Repositorios
         {
             var productoKit = await _context.KitsProductos.Where(kp => kp.KitId == id).ToListAsync();
             return productoKit.Select(kp => kp.ProductoId).ToList();
+        }
+
+        public async Task<Producto?> GetProdImg(int id, string url)
+        {
+            var producto = await _context.Productos.Where(p => p.Id == id).FirstOrDefaultAsync();
+
+            if (producto != null && producto.Imagenes?.Contains(url) == true)
+            {
+                return producto;
+            }
+
+            return null;
+        }
+
+        public async Task<bool> DeleteProd(int id)
+        {
+            var isKit = await _context.KitsProductos.Where(kp => kp.KitId == id).ToListAsync();
+            var isItInKit = await _context.KitsProductos.Where(kp => kp.ProductoId == id).ToListAsync();
+
+            if (isKit.Any() && isItInKit.Any())
+            {
+                var producto = await _context.Productos.Where(p => p.Id == id).FirstOrDefaultAsync();
+                if (producto != null)
+                {
+                    _context.Productos.Remove(producto);
+                    _context.KitsProductos.RemoveRange(isItInKit);
+                    _context.KitsProductos.RemoveRange(isKit);
+
+                    await _context.SaveChangesAsync();
+
+                    return true;
+                }
+                return false;
+            }
+            else if (isKit.Any())
+            {
+                var producto = await _context.Productos.Where(p => p.Id == id).FirstOrDefaultAsync();
+                if (producto != null)
+                {
+                    _context.Productos.Remove(producto);
+                    _context.KitsProductos.RemoveRange(isKit);
+
+                    await _context.SaveChangesAsync();
+
+                    return true;
+                }
+                return false;
+            }
+            else if (isItInKit.Any())
+
+            {
+                var producto = await _context.Productos.Where(p => p.Id == id).FirstOrDefaultAsync();
+                if (producto != null)
+                {
+                    _context.Productos.Remove(producto);
+                    _context.KitsProductos.RemoveRange(isItInKit);
+
+                    await _context.SaveChangesAsync();
+
+                    return true;
+                }
+                return false;
+            }
+            else
+            {
+                var producto = await _context.Productos.Where(p => p.Id == id).FirstOrDefaultAsync();
+                if (producto != null)
+                {
+                    _context.Productos.Remove(producto);
+
+                    await _context.SaveChangesAsync();
+
+                    return true;
+                }
+                return false;
+            }
+
         }
     }
 }

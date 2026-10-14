@@ -37,6 +37,31 @@ namespace sisstudioWA.Servicios.ServicioHttp
             }
         }
 
+        public async Task<bool> DeleteImg(string url, string imgdtoJson)
+        {
+            try
+            {
+                var request = new HttpRequestMessage(HttpMethod.Delete, url);
+                request.Content = new StringContent(imgdtoJson, Encoding.UTF8, "application/json");
+
+                var response = await http.SendAsync(request);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var data = await response.Content.ReadFromJsonAsync<bool>();
+                    return data;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public async Task<HttpResp<T>> GetAsync<T>(string url)
         {
             try
@@ -78,6 +103,51 @@ namespace sisstudioWA.Servicios.ServicioHttp
             catch (Exception e)
             {
                 return new HttpResp<TResp>(false, e.Message, default, null);
+            }
+        }
+
+        public async Task<bool> PostFormDataAsync(string url, MultipartFormDataContent data)
+        {
+            try
+            {
+                var response = await http.PostAsync(url, data);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> UpdateFormDataAsync(string url, MultipartFormDataContent data)
+        {
+            try
+            {
+                var response = await http.PutAsync(url, data);
+            if (response.IsSuccessStatusCode)
+            {
+                return true;
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"PostFormData error {response.StatusCode}: {error}");
+                return false;
+            }
+
+            }
+            catch
+            {
+
+                return false;
             }
         }
 

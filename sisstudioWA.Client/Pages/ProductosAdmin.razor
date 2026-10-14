@@ -1,0 +1,80 @@
+﻿@page "/productosadmin"
+@using sisstudioWA.Servicios.ServicioHttp
+@using sisstudioWA.Shared.DTO
+@inject IHttpService http
+
+<h3>ProductosAdmin</h3>
+
+<button class="btn btn-primary" @onclick="() => mostrarCrear = true">Nuevo producto</button>
+
+@if (productos.Count == 0)
+{
+    <p>No hay productos cargados.</p>
+}
+else
+{
+    <table class="table table-striped" style="margin-top: 1rem;">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Tipo</th>
+                <th>Precio</th>
+                <th>Stock</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var producto in productos)
+            {
+                <tr>
+                    <td>@producto.id</td>
+                    <td>@producto.Nombre</td>
+                    <td>@producto.tipoProd</td>
+                    <td>@producto.Precio</td>
+                    <td>@producto.Stock</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" @onclick="() => AbrirVer(producto)">Ver</button>
+                        <button class="btn btn-sm btn-primary" @onclick="() => EliminarConfirmacion(producto)">Eliminar</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<CrearProducto @bind-Visible="mostrarCrear" OnCreado="CargarProductos" />
+<VerProducto @bind-Visible="mostrarVer" Producto="productoSeleccionado" OnActualizado="CargarProductos"/>
+<EliminarProducto @bind-Visible="mostrarEliminar" Producto="productoSeleccionado" OnActualizado="CargarProductos"/>
+
+@code {
+    private bool mostrarCrear;
+    private bool mostrarVer;
+    private bool mostrarEliminar;
+    private ProductoPrivadoDTO? productoSeleccionado;
+    private List<ProductoPrivadoDTO> productos = new List<ProductoPrivadoDTO>();
+
+    private void AbrirVer(ProductoPrivadoDTO producto)
+    {
+        productoSeleccionado = producto;
+        mostrarVer = true;
+    }
+
+    private void EliminarConfirmacion(ProductoPrivadoDTO producto)
+    {
+        productoSeleccionado = producto;
+        mostrarEliminar = true;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarProductos();
+    }
+
+    private async Task CargarProductos()
+    {
+        var response = await http.GetAsync<List<ProductoPrivadoDTO>>("api/producto/admin");
+        productos = response.Data ?? new List<ProductoPrivadoDTO>();
+        StateHasChanged();
+    }
+}

@@ -17,8 +17,7 @@ namespace sisstudioWA.BD.Datos.Entity
         public string Subtitulo { get; set; }
         [StringLength(250)]
         public string Descripcion { get; set; }
-        [Required]
-        public string[] Imagenes { get; set; }
+        public List<string>? Imagenes { get; set; }
         public TipoProd tipoProd { get; set; } = TipoProd.Producto;//Enum: tipo_producto, ej: "Kit, Producto individual"
         [Required(ErrorMessage = "El precio del producto es obligatorio.")]
         [Range(0, double.MaxValue, ErrorMessage = "El precio del producto debe ser un valor positivo.")]

@@ -191,7 +191,6 @@ namespace sisstudioWA.BD.Migrations
                         .HasColumnType("nvarchar(250)");
 
                     b.PrimitiveCollection<string>("Imagenes")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Nombre")

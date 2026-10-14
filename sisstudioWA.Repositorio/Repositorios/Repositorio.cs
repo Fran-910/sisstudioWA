@@ -36,18 +36,6 @@ namespace sisstudioWA.Repositorio.Repositorios
             }
 
         }
-        //public async Task<bool> Exists(int id)
-        //{
-        //    var entidad = await _context.Set<E>().FirstOrDefaultAsync(x => x.Id == id);
-        //    if (entidad == null)
-        //    {
-        //        return false;
-        //    }
-        //    else
-        //    {
-        //        return true;
-        //    }
-        //}
         public async Task<bool> Insert(E entity)
         {
             if (entity == null)

@@ -1,0 +1,286 @@
+@using System.Text.Json
+@using sisstudioWA.Servicios.ServicioHttp
+@using sisstudioWA.Shared.DTO
+@using sisstudioWA.Shared.Enum
+@inject IHttpService http
+
+@if (Visible)
+{
+    <div class="cp-modal-overlay" @onclick="CerrarPorOverlay">
+        <div class="cp-modal-card" role="dialog" aria-modal="true" aria-label="Crear Producto" tabindex="0" @ref="panelRef" @onkeydown="ManejarTecla" @onclick:stopPropagation="true">
+            <div class="cp-modal-header">
+                <h3>Crear Producto</h3>
+                <button type="button" class="cp-modal-close" @onclick="Cerrar" aria-label="Cerrar">&#10005;</button>
+            </div>
+
+            <div class="cp-modal-body">
+                <!-- Formulario de datos del producto -->
+                <div class="cp-form">
+                    <label>Nombre del Producto:</label>
+                    <input type="text" @bind="miDto.DTO.Nombre" class="form-control" />
+                    <label>Subtitulo:</label>
+                    <input type="text" @bind="miDto.DTO.Subtitulo" class="form-control" />
+                    <label for="estado">Tipo de producto:</label>
+                    <select id="estado" @bind="miDto.DTO.tipoProd" class="form-control">
+                        <option value="@TipoProd.Producto">Producto Individual</option>
+                        <option value="@TipoProd.Kit">Kit</option>
+                    </select>
+                    <label>Descripción:</label>
+                    <input type="text" @bind="miDto.DTO.Descripcion" class="form-control" />
+                    <label>Precio:</label>
+                    <input type="number" @bind="miDto.DTO.Precio" class="form-control" />
+                    <label>Stock:</label>
+                    <input type="number" @bind="miDto.DTO.Stock" class="form-control" />
+                </div>
+
+                @if (miDto.DTO.tipoProd == TipoProd.Kit)
+                {
+                    <div class="kit-section">
+                        <h4>Agregar Productos al Kit</h4>
+                        <form @onsubmit="BuscarProducto" @onsubmit:preventDefault="true">
+                            <input type="search" @bind="terminoBusqueda" placeholder="Buscar producto por nombre o ID..." class="form-control" />
+                        </form>
+
+                        @if (productosBusqueda.Count == 0 && !string.IsNullOrWhiteSpace(terminoBusqueda))
+                        {
+                            <p>@busquedaState</p>
+                        }
+                        else
+                        {
+                            <p>@busquedaState</p>
+                            @foreach (var producto in productosBusqueda)
+                            {
+                                <div>
+                                    <label>
+                                        <p>Id: @producto.id</p>
+                                        <p>Nombre: @producto.Nombre</p>
+                                        <p>Precio: @producto.Precio</p>
+                                        <p>Cantidad: @currentCantProd</p>
+                                        <input @bind="currentCantProd" type="number" placeholder="Cantidad" />
+                                        <button @onclick="(() => AddToProd(producto.id, currentCantProd))">Add</button>
+                                    </label>
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+
+                <hr />
+
+                <div>
+                    <label>Seleccionar Im�genes (Max 5):</label>
+                    <InputFile OnChange="CargarImagenes" multiple accept="image/png, image/jpeg, image/webp" class="form-control" />
+                </div>
+
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px;">
+                    <p>Vistas previas de las im�genes seleccionadas:</p>
+                    @foreach (var img in imagenesSeleccionadas)
+                    {
+                        @if (!string.IsNullOrEmpty(img.url))
+                        {
+                            <div style="position: relative;">
+                                <img src="@img.url" style="width: 150px; height: 150px; object-fit: cover; border-radius: 8px; border: 1px solid #ccc;" />
+                                <button @onclick="@(() => RemoverImagen(img.Id))">-</button>
+                            </div>
+                        }
+                    }
+
+                </div>
+            </div>
+
+            <div class="cp-modal-footer">
+                <button class="btn btn-secondary" @onclick="Cerrar">Cancelar</button>
+                <button class="btn btn-primary" @onclick="GuardarProducto">Crear</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+    [Parameter] public EventCallback OnCreado { get; set; }
+
+    public CUProductoRequestDTO miDto = new CUProductoRequestDTO();
+    public List<ProductoPrivadoDTO> productosBusqueda = new List<ProductoPrivadoDTO>();
+    private List<ImagenSeleccionada> imagenesSeleccionadas = new List<ImagenSeleccionada>();
+    private string terminoBusqueda = string.Empty;
+    private string busquedaState = string.Empty;
+    private long maxFileSize = 1024 * 1024 * 5;
+    private ElementReference panelRef;
+    private bool estabaVisible;
+    private bool focoAplicado;
+    public int currentCantProd = 1;
+
+    protected override void OnInitialized()
+    {
+        ReiniciarFormulario();
+    }
+
+    protected override void OnParametersSet()
+    {
+        if (Visible && !estabaVisible)
+        {
+            ReiniciarFormulario();
+        }
+        estabaVisible = Visible;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Visible && !focoAplicado)
+        {
+            try
+            {
+                await panelRef.FocusAsync();
+                focoAplicado = true;
+            }
+            catch (InvalidOperationException)
+            {
+            }
+        }
+    }
+
+    private void ReiniciarFormulario()
+    {
+        miDto = new CUProductoRequestDTO { DTO = new ProductoPrivadoDTO() };
+        productosBusqueda = new List<ProductoPrivadoDTO>();
+        imagenesSeleccionadas.Clear();
+        terminoBusqueda = string.Empty;
+        busquedaState = string.Empty;
+        focoAplicado = false;
+    }
+
+    private async Task Cerrar()
+    {
+        imagenesSeleccionadas.Clear();
+        focoAplicado = false;
+        await VisibleChanged.InvokeAsync(false);
+    }
+
+    private async Task CerrarPorOverlay()
+    {
+        await Cerrar();
+    }
+
+    private async Task ManejarTecla(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            await Cerrar();
+        }
+    }
+
+    public async Task BuscarProducto()
+    {
+        var response = await http.GetAsync<List<ProductoPrivadoDTO>>($"api/producto/admin");
+
+        var productos = response.Data;
+
+        if (productos == null || !productos.Any())
+        {
+            await ChangeMessage("No se encontraron productos.");
+            productosBusqueda.Clear();
+            StateHasChanged();
+            return;
+        }
+
+        var esId = int.TryParse(terminoBusqueda, out var idBuscado);
+
+        var productosFiltrados = productos.Where(p =>
+            p.Nombre.Contains(terminoBusqueda, StringComparison.OrdinalIgnoreCase) ||
+            (esId && p.id == idBuscado)).ToList();
+
+        if (productosFiltrados.Count == 0)
+        {
+            await ChangeMessage("No se encontraron productos con ese término.");
+        }
+        else
+        {
+            await ChangeMessage($"Se encontraron {productosFiltrados.Count} productos.");
+        }
+        productosBusqueda = productosFiltrados;
+        StateHasChanged();
+    }
+
+    public async Task ChangeMessage(string newMessage)
+    {
+        busquedaState = newMessage;
+        StateHasChanged();
+        await Task.Delay(1000);
+        busquedaState = string.Empty;
+        StateHasChanged();
+    }
+
+    private async Task GuardarProducto()
+    {
+        if (miDto.DTO.tipoProd == TipoProd.Kit && (miDto.idProductosKit == null || miDto.idProductosKit.Count == 0))
+        {
+            busquedaState = "Debe agregar al menos un producto componente antes de crear el kit.";
+            StateHasChanged();
+            return;
+        }
+
+        var formData = new MultipartFormDataContent();
+
+        foreach (var image in imagenesSeleccionadas)
+        {
+            var streamContent = new StreamContent(image.archivo.OpenReadStream(maxFileSize));
+            streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(image.archivo.ContentType);
+            formData.Add(streamContent, "imagenes", image.archivo.Name);
+        }
+
+        formData.Add(new StringContent(JsonSerializer.Serialize(miDto)), "producto");
+
+        var response = await http.PostFormDataAsync("api/producto/crear", formData);
+
+        if (response == true)
+        {
+            await OnCreado.InvokeAsync();
+            await Cerrar();
+        }
+        else
+        {
+            Console.WriteLine($"Error al crear producto.");
+        }
+    }
+
+    private async Task CargarImagenes(InputFileChangeEventArgs e)
+    {
+        foreach (var image in e.GetMultipleFiles(5))
+        {
+            if (image.Size > maxFileSize)
+            {
+                continue;
+            }
+            using var stream = image.OpenReadStream(maxFileSize);
+            using var ms = new MemoryStream();
+            await stream.CopyToAsync(ms);
+            var base64 = Convert.ToBase64String(ms.ToArray());
+            var imgUrl = $"data:{image.ContentType};base64,{base64}";
+            imagenesSeleccionadas.Add(new()
+            {
+                url = imgUrl,
+                archivo = image
+            });
+        }
+
+        StateHasChanged();
+    }
+
+    private void RemoverImagen(string id)
+    {
+
+        imagenesSeleccionadas.RemoveAll(p => p.Id == id);
+
+        StateHasChanged();
+    }
+
+    private void AddToProd(int id, int cant)
+    {
+        for (int i = 0; i < cant; i++)
+        {
+            miDto.idProductosKit.Add(id);
+        }
+    }
+}

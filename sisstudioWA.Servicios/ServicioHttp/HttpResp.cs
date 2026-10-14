@@ -7,9 +7,10 @@ namespace sisstudioWA.Servicios.ServicioHttp
     public class HttpResp<T>
     {
         public bool IsSuccess { get; set; }
+        private string? _message;
         public string? Message { 
             get => ObtenerError(); 
-            set; }
+            set => _message = value; }
         public T? Data { get; set; }
         public HttpResponseMessage? Response { get; set; }
 
@@ -24,9 +25,9 @@ namespace sisstudioWA.Servicios.ServicioHttp
         public string ObtenerError()
         {
 
-            if(Message != null && Message != string.Empty)
+            if(_message != null && _message != string.Empty)
             {
-                return Message;
+                return _message;
             }
             if (Response == null)
             {

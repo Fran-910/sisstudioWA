@@ -1,0 +1,101 @@
+﻿@using sisstudioWA.Servicios.ServicioHttp
+@using sisstudioWA.Shared.DTO
+@inject IHttpService http
+
+@if (Visible)
+{
+    <div class="vp-modal-overlay" @onclick="CerrarPorOverlay">
+        <div class="vp-modal-card" role="dialog" aria-modal="true" aria-label="Ver Producto" tabindex="0" @ref="panelRef" @onkeydown="ManejarTecla" @onclick:stopPropagation="true">
+            <div class="vp-modal-header">
+                <button type="button" class="vp-modal-close" @onclick="Cerrar" aria-label="Cerrar">&#10005;</button>
+            </div>
+
+            <div class="vp-modal-body">
+                <h2>Confirmar Eliminación</h2>
+                <p>¿Desea eliminar el producto @Producto.Nombre de Id: [@Producto.id] ?</p>
+            </div>
+
+            <div class="vp-modal-footer">
+                <button class="btn btn-secondary" @onclick="@(() => BorrarProducto(Producto))">Confirmar</button>
+                <button class="btn btn-secondary" @onclick="Cerrar">Cancelar</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+    [Parameter] public ProductoPrivadoDTO? Producto { get; set; }
+    [Parameter] public EventCallback OnActualizado { get; set; }
+
+
+    private ElementReference panelRef;
+    private bool estabaVisible;
+    private bool focoAplicado;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Visible && !estabaVisible)
+        {
+            focoAplicado = false;
+        }
+        estabaVisible = Visible;
+
+        if (!Visible)
+        {
+            return;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Visible && !focoAplicado)
+        {
+            try
+            {
+                await panelRef.FocusAsync();
+                focoAplicado = true;
+            }
+            catch (InvalidOperationException)
+            {
+            }
+        }
+    }
+
+    private async Task BorrarProducto(ProductoPrivadoDTO producto)
+    {
+        var url = $"api/producto/borrar/{producto.id}";
+        var response = await http.DeleteAsync<bool>(url);
+        if(response.IsSuccess)
+        {
+            Console.WriteLine($"Respuesta correcta: {response.Message}");
+            await OnActualizado.InvokeAsync();
+        }
+        else
+        {
+            Console.WriteLine($"Respuesta incorrecta: {response.Message}");
+        }
+
+        await Cerrar();
+    }
+
+    private async Task Cerrar()
+    {
+        focoAplicado = false;
+        await VisibleChanged.InvokeAsync(false);
+    }
+
+    private async Task CerrarPorOverlay()
+    {
+        await Cerrar();
+    }
+
+    private async Task ManejarTecla(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            await Cerrar();
+        }
+    }
+}
