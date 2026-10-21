@@ -41,6 +41,7 @@ namespace sisstudioWA.Server.Controllers
                 publico.Nombre = product.Nombre;
                 publico.Subtitulo = product.Subtitulo;
                 publico.Descripcion = product.Descripcion;
+                publico.Imagenes = ImagenesExistentes(product.Imagenes);
                 publico.Precio = product.Precio;
                 publico.HayStock = (product.Stock > 0);
                 publico.tipoProd = product.tipoProd;
@@ -54,6 +55,10 @@ namespace sisstudioWA.Server.Controllers
         public async Task<ActionResult<List<ProductoPrivadoDTO>>> ListaProductosAdmin()
         {
             var productos = await repositorio.Select();
+            foreach (var producto in productos)
+            {
+                producto.Imagenes = ImagenesExistentes(producto.Imagenes);
+            }
             return Ok(productos);
         }
 
@@ -63,6 +68,7 @@ namespace sisstudioWA.Server.Controllers
             var producto = await repositorio.SelectById(id);
             if (producto != null)
             {
+                producto.Imagenes = ImagenesExistentes(producto.Imagenes);
                 return Ok(producto);
             }
             else
@@ -372,6 +378,10 @@ namespace sisstudioWA.Server.Controllers
             var productosKit = await repositorio.GetProductosKitById(id);
             if (productosKit != null && productosKit.Count > 0)
             {
+                foreach (var producto in productosKit)
+                {
+                    producto.Imagenes = ImagenesExistentes(producto.Imagenes);
+                }
                 return Ok(productosKit);
             }
             else
@@ -420,6 +430,42 @@ namespace sisstudioWA.Server.Controllers
 
             await repositorio.Update(prod.Id, prod);
             return Ok(true);
+        }
+
+        private List<string> ImagenesExistentes(IEnumerable<string>? imagenes)
+        {
+            var existentes = new List<string>();
+            if (imagenes == null)
+            {
+                return existentes;
+            }
+
+            var storageRoot = GetStorageRoot();
+            foreach (var url in imagenes)
+            {
+                if (string.IsNullOrWhiteSpace(url))
+                {
+                    continue;
+                }
+
+                // Las rutas externas se conservan; las locales se validan contra el disco.
+                if (!url.StartsWith("/uploads/", StringComparison.OrdinalIgnoreCase))
+                {
+                    existentes.Add(url);
+                    continue;
+                }
+
+                var rutaRelativa = Uri.UnescapeDataString(url["/uploads/".Length..])
+                    .Replace('/', Path.DirectorySeparatorChar);
+                var rutaFisica = Path.Combine(storageRoot, rutaRelativa);
+
+                if (System.IO.File.Exists(rutaFisica))
+                {
+                    existentes.Add(url);
+                }
+            }
+
+            return existentes;
         }
 
         private string GetStorageRoot()

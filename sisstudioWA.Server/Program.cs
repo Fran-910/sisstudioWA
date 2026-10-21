@@ -35,10 +35,14 @@ if (!Path.IsPathRooted(productosPath))
     productosPath = Path.Combine(builder.Environment.ContentRootPath, productosPath);
 Directory.CreateDirectory(productosPath);
 
+var tiposDeArchivo = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
+tiposDeArchivo.Mappings[".jfif"] = "image/jpeg";
+
 app.UseStaticFiles(new StaticFileOptions
 {
     FileProvider = new Microsoft.Extensions.FileProviders.PhysicalFileProvider(productosPath),
-    RequestPath = "/uploads"
+    RequestPath = "/uploads",
+    ContentTypeProvider = tiposDeArchivo
 });
 
 #region Middleware

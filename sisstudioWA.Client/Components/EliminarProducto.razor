@@ -4,21 +4,55 @@
 
 @if (Visible)
 {
-    <div class="vp-modal-overlay" @onclick="CerrarPorOverlay">
-        <div class="vp-modal-card" role="dialog" aria-modal="true" aria-label="Ver Producto" tabindex="0" @ref="panelRef" @onkeydown="ManejarTecla" @onclick:stopPropagation="true">
-            <div class="vp-modal-header">
-                <button type="button" class="vp-modal-close" @onclick="Cerrar" aria-label="Cerrar">&#10005;</button>
+    <div class="sist-overlay" @onclick="CerrarPorOverlay">
+        <div class="sist-modal sist-modal--sm" role="dialog" aria-modal="true" aria-labelledby="eliminar-producto-title" tabindex="0" @ref="panelRef" @onkeydown="ManejarTecla" @onclick:stopPropagation="true">
+            <header class="sist-modal__header">
+                <div class="sist-modal__header-copy">
+                    <h3 class="sist-modal__title" id="eliminar-producto-title">Eliminar producto</h3>
+                    <p class="sist-modal__subtitle">Esta acción no se puede deshacer.</p>
+                </div>
+                <button type="button" class="sist-icon-btn" @onclick="Cerrar" aria-label="Cerrar">×</button>
+            </header>
+
+            <div class="sist-modal__body">
+                @if (Producto is null)
+                {
+                    <p class="sist-hint">No hay un producto seleccionado.</p>
+                }
+                else
+                {
+                    <div class="ep-confirm">
+                        <div class="ep-icon" aria-hidden="true">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 6h18"></path>
+                                <path d="M8 6V4h8v2"></path>
+                                <path d="M19 6l-1 14H6L5 6"></path>
+                                <path d="M10 11v6M14 11v6"></path>
+                            </svg>
+                        </div>
+                        <p class="ep-question">¿Querés eliminar <strong>@Producto.Nombre</strong>?</p>
+                        <p class="ep-detail">Se borran también sus fotos. El producto #@Producto.id deja de estar en el catálogo.</p>
+
+                        @if (!string.IsNullOrEmpty(errorEliminar))
+                        {
+                            <div class="sist-alert sist-alert--error" role="alert">@errorEliminar</div>
+                        }
+                    </div>
+                }
             </div>
 
-            <div class="vp-modal-body">
-                <h2>Confirmar Eliminación</h2>
-                <p>¿Desea eliminar el producto @Producto.Nombre de Id: [@Producto.id] ?</p>
-            </div>
-
-            <div class="vp-modal-footer">
-                <button class="btn btn-secondary" @onclick="@(() => BorrarProducto(Producto))">Confirmar</button>
-                <button class="btn btn-secondary" @onclick="Cerrar">Cancelar</button>
-            </div>
+            <footer class="sist-modal__footer">
+                <p class="sist-modal__note">La acción es permanente.</p>
+                <div class="sist-actions">
+                    <button type="button" class="sist-btn sist-btn--ghost" @onclick="Cerrar">Cancelar</button>
+                    @if (Producto is not null)
+                    {
+                        <button type="button" class="sist-btn sist-btn--danger" @onclick="() => BorrarProducto(Producto)" disabled="@borrando">
+                            @(borrando ? "Eliminando..." : "Sí, eliminar")
+                        </button>
+                    }
+                </div>
+            </footer>
         </div>
     </div>
 }
@@ -29,16 +63,19 @@
     [Parameter] public ProductoPrivadoDTO? Producto { get; set; }
     [Parameter] public EventCallback OnActualizado { get; set; }
 
-
     private ElementReference panelRef;
     private bool estabaVisible;
     private bool focoAplicado;
+    private bool borrando;
+    private string? errorEliminar;
 
     protected override async Task OnParametersSetAsync()
     {
         if (Visible && !estabaVisible)
         {
             focoAplicado = false;
+            errorEliminar = null;
+            borrando = false;
         }
         estabaVisible = Visible;
 
@@ -65,24 +102,38 @@
 
     private async Task BorrarProducto(ProductoPrivadoDTO producto)
     {
-        var url = $"api/producto/borrar/{producto.id}";
-        var response = await http.DeleteAsync<bool>(url);
-        if(response.IsSuccess)
-        {
-            Console.WriteLine($"Respuesta correcta: {response.Message}");
-            await OnActualizado.InvokeAsync();
-        }
-        else
-        {
-            Console.WriteLine($"Respuesta incorrecta: {response.Message}");
-        }
+        errorEliminar = null;
+        borrando = true;
 
-        await Cerrar();
+        try
+        {
+            var response = await http.DeleteAsync<bool>($"api/producto/borrar/{producto.id}");
+            if (response.IsSuccess)
+            {
+                await OnActualizado.InvokeAsync();
+                await Cerrar();
+            }
+            else
+            {
+                errorEliminar = "No pudimos eliminar el producto. Reintentá en unos segundos.";
+            }
+        }
+        catch
+        {
+            errorEliminar = "No pudimos eliminar el producto. Reintentá en unos segundos.";
+        }
+        finally
+        {
+            borrando = false;
+            StateHasChanged();
+        }
     }
 
     private async Task Cerrar()
     {
         focoAplicado = false;
+        borrando = false;
+        errorEliminar = null;
         await VisibleChanged.InvokeAsync(false);
     }
 

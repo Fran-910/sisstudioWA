@@ -1,58 +1,162 @@
 ﻿@page "/productosadmin"
 @using sisstudioWA.Servicios.ServicioHttp
 @using sisstudioWA.Shared.DTO
+@using sisstudioWA.Shared.Enum
 @inject IHttpService http
 
-<h3>ProductosAdmin</h3>
-
-<button class="btn btn-primary" @onclick="() => mostrarCrear = true">Nuevo producto</button>
-
-@if (productos.Count == 0)
-{
-    <p>No hay productos cargados.</p>
-}
-else
-{
-    <table class="table table-striped" style="margin-top: 1rem;">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Nombre</th>
-                <th>Tipo</th>
-                <th>Precio</th>
-                <th>Stock</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var producto in productos)
+<section class="admin">
+    <header class="sist-page-head">
+        <div>
+            <h1 class="sist-page-title">Tu catálogo</h1>
+            <p class="sist-page-sub">Los kits y productos que ya están en el catálogo.</p>
+            @if (!cargando && string.IsNullOrEmpty(errorCarga) && productos.Count > 0)
             {
-                <tr>
-                    <td>@producto.id</td>
-                    <td>@producto.Nombre</td>
-                    <td>@producto.tipoProd</td>
-                    <td>@producto.Precio</td>
-                    <td>@producto.Stock</td>
-                    <td>
-                        <button class="btn btn-sm btn-primary" @onclick="() => AbrirVer(producto)">Ver</button>
-                        <button class="btn btn-sm btn-primary" @onclick="() => EliminarConfirmacion(producto)">Eliminar</button>
-                    </td>
-                </tr>
+                <div class="sist-page-meta">
+                    <span class="sist-count">@productos.Count @(productos.Count == 1 ? "producto" : "productos")</span>
+                </div>
             }
-        </tbody>
-    </table>
-}
+        </div>
+        <div class="sist-page-actions">
+            <button type="button" class="sist-btn sist-btn--primary" @onclick="AbrirCrear">
+                <span aria-hidden="true">+</span> Cargar producto
+            </button>
+        </div>
+    </header>
+
+    @if (cargando)
+    {
+        <div class="admin-skeleton" aria-busy="true" aria-label="Cargando catálogo">
+            @for (var i = 0; i < 3; i++)
+            {
+                <div class="admin-skeleton__row">
+                    <div class="admin-skeleton__thumb sist-skeleton" aria-hidden="true"></div>
+                    <div class="admin-skeleton__lines" aria-hidden="true">
+                        <div class="sist-skeleton" style="width: 42%; height: 14px;"></div>
+                        <div class="sist-skeleton" style="width: 68%; height: 12px;"></div>
+                    </div>
+                    <div class="sist-skeleton" style="width: 82px; height: 26px;" aria-hidden="true"></div>
+                </div>
+            }
+        </div>
+    }
+    else if (!string.IsNullOrEmpty(errorCarga))
+    {
+        <div class="sist-alert sist-alert--error admin-error" role="alert">
+            <span>@errorCarga</span>
+            <button type="button" class="sist-btn sist-btn--secondary sist-btn--sm" @onclick="CargarProductos">Reintentar</button>
+        </div>
+    }
+    else if (productos.Count == 0)
+    {
+        <div class="sist-empty">
+            <div class="sist-empty__spark" aria-hidden="true">✦</div>
+            <h2 class="sist-empty__title">Todavía no hay productos</h2>
+            <p class="sist-empty__text">Cargá el primero para que el catálogo empiece a tomar forma.</p>
+            <button type="button" class="sist-btn sist-btn--primary" @onclick="AbrirCrear">
+                <span aria-hidden="true">+</span> Cargar el primero
+            </button>
+        </div>
+    }
+    else
+    {
+        <div class="admin-list">
+            <div class="admin-list__head" aria-hidden="true">
+                <span></span>
+                <span>Producto</span>
+                <span>Tipo</span>
+                <span>Precio</span>
+                <span>Stock</span>
+                <span>Acciones</span>
+            </div>
+            <ul class="admin-list__body">
+                @foreach (var producto in productos)
+                {
+                    <li class="admin-row" @key="producto.id">
+                        <div class="admin-thumb">
+                            <span class="admin-thumb__ph" aria-hidden="true">✦</span>
+                            @if (producto.Imagenes is { Count: > 0 })
+                            {
+                                <img src="@producto.Imagenes[0]" alt="Foto de @producto.Nombre" loading="lazy" onerror="this.remove()" />
+                            }
+                        </div>
+
+                        <div class="admin-info">
+                            <div class="admin-name">@producto.Nombre</div>
+                            @if (!string.IsNullOrWhiteSpace(producto.Subtitulo))
+                            {
+                                <div class="admin-subtitle">@producto.Subtitulo</div>
+                            }
+                            <div class="admin-id">#@producto.id</div>
+                        </div>
+
+                        <div class="admin-meta">
+                            <div class="admin-type">
+                                @if (producto.tipoProd == TipoProd.Kit)
+                                {
+                                    <span class="sist-badge sist-badge--kit"><span aria-hidden="true">✦</span> Kit</span>
+                                }
+                                else
+                                {
+                                    <span class="sist-badge sist-badge--producto">Producto</span>
+                                }
+                            </div>
+                            <div class="admin-price">
+                                <span class="sist-price-tag">@FormatoPrecio(producto.Precio)</span>
+                            </div>
+                            <div class="admin-stock">
+                                @if (producto.Stock == 0)
+                                {
+                                    <span class="sist-badge sist-badge--danger">Sin stock</span>
+                                }
+                                else
+                                {
+                                    <span class="sist-stock"><span class="sist-dot sist-dot--ok"></span>@producto.Stock u.</span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="admin-actions">
+                            <button type="button" class="sist-btn sist-btn--secondary sist-btn--sm" @onclick="() => AbrirVer(producto)">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                Abrir
+                            </button>
+                            <button type="button" class="sist-btn sist-btn--danger-ghost sist-btn--sm" @onclick="() => EliminarConfirmacion(producto)">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M3 6h18"></path>
+                                    <path d="M8 6V4h8v2"></path>
+                                    <path d="M19 6l-1 14H6L5 6"></path>
+                                    <path d="M10 11v6M14 11v6"></path>
+                                </svg>
+                                Eliminar
+                            </button>
+                        </div>
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+</section>
 
 <CrearProducto @bind-Visible="mostrarCrear" OnCreado="CargarProductos" />
-<VerProducto @bind-Visible="mostrarVer" Producto="productoSeleccionado" OnActualizado="CargarProductos"/>
-<EliminarProducto @bind-Visible="mostrarEliminar" Producto="productoSeleccionado" OnActualizado="CargarProductos"/>
+<VerProducto @bind-Visible="mostrarVer" Producto="productoSeleccionado" OnActualizado="CargarProductos" />
+<EliminarProducto @bind-Visible="mostrarEliminar" Producto="productoSeleccionado" OnActualizado="CargarProductos" />
 
 @code {
     private bool mostrarCrear;
     private bool mostrarVer;
     private bool mostrarEliminar;
+    private bool cargando = true;
+    private string? errorCarga;
     private ProductoPrivadoDTO? productoSeleccionado;
-    private List<ProductoPrivadoDTO> productos = new List<ProductoPrivadoDTO>();
+    private List<ProductoPrivadoDTO> productos = new();
+
+    private static string FormatoPrecio(decimal precio) =>
+        precio.ToString("$ #,##0.##", CultureInfo.GetCultureInfo("es-AR"));
+
+    private void AbrirCrear() => mostrarCrear = true;
 
     private void AbrirVer(ProductoPrivadoDTO producto)
     {
@@ -73,8 +177,29 @@ else
 
     private async Task CargarProductos()
     {
-        var response = await http.GetAsync<List<ProductoPrivadoDTO>>("api/producto/admin");
-        productos = response.Data ?? new List<ProductoPrivadoDTO>();
-        StateHasChanged();
+        cargando = true;
+        errorCarga = null;
+
+        try
+        {
+            var response = await http.GetAsync<List<ProductoPrivadoDTO>>("api/producto/admin");
+            if (response.IsSuccess)
+            {
+                productos = response.Data ?? new List<ProductoPrivadoDTO>();
+            }
+            else
+            {
+                errorCarga = "No pudimos cargar el catálogo. Reintentá en unos segundos.";
+            }
+        }
+        catch
+        {
+            errorCarga = "No pudimos cargar el catálogo. Reintentá en unos segundos.";
+        }
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
     }
 }

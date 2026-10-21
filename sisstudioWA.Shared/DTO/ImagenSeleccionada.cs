@@ -10,6 +10,8 @@ namespace sisstudioWA.Shared.DTO
     {
         public string Id { get; } = Guid.NewGuid().ToString();
         public string url { get; set; } = string.Empty;
-        public IBrowserFile archivo { get; set; } = default!;
+        public byte[] content { get; set; } = Array.Empty<byte>();
+        public string nombre { get; set; } = string.Empty;
+        public string contentType { get; set; } = string.Empty;
     }
 }

@@ -1,9 +1,14 @@
 ﻿@page "/"
 @inject NavigationManager navigationManager
 
+<div>
+    <button @onclick="@(() => navigationManager.NavigateTo("/productosadmin"))">Panel de Administrador</button>
+</div>
+
+<div>
+    <p>Productos: </p>
+</div>
+
 @code {
-    protected override void OnInitialized()
-    {
-        navigationManager.NavigateTo("/productosadmin");
-    }
+
 }
