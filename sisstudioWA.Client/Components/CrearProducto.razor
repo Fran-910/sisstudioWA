@@ -6,240 +6,315 @@
 
 @if (Visible)
 {
-    <EditForm EditContext="@editContext" OnValidSubmit="GuardarProducto">
+    @if(cargaFinalizada == false)
+    {
+        #region Cargar un producto
+        <EditForm EditContext="@editContext" OnValidSubmit="GuardarProducto">
 
-        <DataAnnotationsValidator/>
+            <DataAnnotationsValidator />
+            <div class="sist-overlay" @onclick="CerrarPorOverlay">
+                <div class="sist-modal sist-modal--lg" role="dialog" aria-modal="true" aria-labelledby="crear-producto-title" tabindex="0" @ref="panelRef" @onkeydown="ManejarTecla" @onclick:stopPropagation="true">
+                    <header class="sist-modal__header">
+                        <div class="sist-modal__header-copy">
+                            <h3 class="sist-modal__title" id="crear-producto-title">Cargar producto</h3>
+                            <p class="sist-modal__subtitle">Completá la ficha y sumá las fotos.</p>
+                        </div>
+                        <button type="button" class="sist-icon-btn" @onclick="Cerrar" aria-label="Cerrar">×</button>
+                    </header>
+
+                    <div class="sist-modal__body">
+                        @if (!string.IsNullOrEmpty(errorGuardado))
+                        {
+                            <div class="sist-alert sist-alert--error" role="alert">@errorGuardado</div>
+                        }
+
+                        <div class="cp-layout">
+                            <div class="cp-fields">
+                                <label class="sist-field">
+                                    <span class="sist-label">Nombre</span>
+                                    <InputText class="sist-input" @bind-Value="miDto.DTO.Nombre" placeholder="Kit cumpleaños" />
+                                    <ValidationMessage For="@(() => miDto.DTO.Nombre)" />
+                                </label>
+
+                                <label class="sist-field">
+                                    <span class="sist-label">Subtítulo <span class="sist-optional">(opcional)</span></span>
+                                    <InputText class="sist-input" @bind-Value="miDto.DTO.Subtitulo" placeholder="Para armar entre todos"></InputText>
+                                    <ValidationMessage For="@(() => miDto.DTO.Subtitulo)" />
+                                </label>
+
+                                <div class="sist-field">
+                                    <span class="sist-label" id="tipo-producto-label">Tipo de producto</span>
+                                    <InputRadioGroup TValue="TipoProd"
+                                                     Value="@miDto.DTO.tipoProd"
+                                                     ValueChanged="CambiarTipo"
+                                                     ValueExpression="@(() => miDto.DTO.tipoProd)">
+
+                                        <div class="sist-segment" role="group" aria-labelledby="tipo-producto-label">
+                                            <label class="sist-segment__option @(miDto.DTO.tipoProd == TipoProd.Producto ? "is-active" : "")">
+                                                <InputRadio Value="TipoProd.Producto" class="sist-input-radio" />
+                                                Producto individual
+                                            </label>
+
+                                            <label class="sist-segment__option @(miDto.DTO.tipoProd == TipoProd.Kit ? "is-active" : "")">
+                                                <InputRadio Value="TipoProd.Kit" class="sist-input-radio" />
+                                                Kit
+                                            </label>
+                                        </div>
+
+                                    </InputRadioGroup>
+                                </div>
+
+                                <label class="sist-field">
+                                    <span class="sist-label">Descripción</span>
+                                    <InputTextArea class="sist-textarea" rows="3" @bind-Value="miDto.DTO.Descripcion" placeholder="Qué incluye, para qué edad, cómo se usa..." />
+                                    <ValidationMessage For="@(() => miDto.DTO.Descripcion)" />
+                                </label>
+
+                                <div class="cp-row">
+                                    <label class="sist-field">
+                                        <span class="sist-label">Precio</span>
+                                        <span class="sist-input-wrap">
+                                            <span aria-hidden="true">$</span>
+                                            <InputNumber class="sist-input sist-input--bare" @bind-Value="miDto.DTO.Precio" placeholder="0" />
+                                        </span>
+                                    </label>
+                                    <label class="sist-field">
+                                        <span class="sist-label">Stock</span>
+                                        <span class="sist-input-wrap">
+                                            <InputNumber class="sist-input sist-input--bare" @bind-Value="miDto.DTO.Stock" placeholder="0" />
+                                        </span>
+                                    </label>
+                                </div>
+
+                                @* Avisos fuera del grid de dos columnas: no deforman al campo vecino. *@
+                                <div class="cp-row__avisos" aria-live="polite">
+                                    <ValidationMessage For="@(() => miDto.DTO.Precio)" />
+                                    <ValidationMessage For="@(() => miDto.DTO.Stock)" />
+                                </div>
+                            </div>
+
+                            <aside class="cp-media">
+                                <div class="sist-section-title">Fotos</div>
+                                <label class="sist-dropzone">
+                                    <InputFile @key="keyId" id="fotos-producto" OnChange="CargarImagenes" multiple accept="image/png, image/jpeg, image/webp" class="sist-file-input" />
+                                    <span class="sist-dropzone__icon" aria-hidden="true">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <rect x="3" y="3" width="18" height="18" rx="3"></rect>
+                                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                            <path d="m21 15-5-5L5 21"></path>
+                                        </svg>
+                                    </span>
+                                    <span class="sist-dropzone__title">Subir fotos</span>
+                                    <span class="sist-dropzone__hint">JPG, PNG o WebP · hasta 5 MB</span>
+                                </label>
+                                <p class="sist-hint">Hasta 5 fotos. La primera se usa como portada.</p>
+
+                                @if (!string.IsNullOrEmpty(mensajeFotos))
+                                {
+                                    <div class="sist-alert sist-alert--error" role="alert">@mensajeFotos</div>
+                                }
+
+                                @if (imagenesSeleccionadas.Count > 0)
+                                {
+                                    <div class="sist-photo-grid">
+                                        @for (var i = 0; i < imagenesSeleccionadas.Count; i++)
+                                        {
+                                            var img = imagenesSeleccionadas[i];
+                                            <div class="sist-photo" @key="img.Id">
+                                                <img src="@img.url" alt="Foto seleccionada @(i + 1)" />
+                                                @if (i == 0)
+                                                {
+                                                    <span class="sist-photo__cover">Portada</span>
+                                                }
+                                                <button type="button" class="sist-photo__remove" @onclick="() => RemoverImagen(img.Id)" aria-label="Quitar foto">×</button>
+                                            </div>
+                                        }
+
+                                        @if (imagenesSeleccionadas.Count < 5)
+                                        {
+                                            <label class="sist-photo sist-photo--add" for="fotos-producto">
+                                                <span aria-hidden="true">+</span>
+                                                <span class="sist-sr-only">Agregar otra foto</span>
+                                            </label>
+                                        }
+                                    </div>
+                                }
+                            </aside>
+
+                            @if (miDto.DTO.tipoProd == TipoProd.Kit)
+                            {
+                                <section class="cp-kit">
+                                    <div class="cp-kit__head">
+                                        <div>
+                                            <div class="sist-section-title">Receta del kit</div>
+                                            <p class="sist-hint">Buscá productos y agregá las cantidades.</p>
+                                        </div>
+                                        @if (miDto.idProductosKit.Count > 0)
+                                        {
+                                            <span class="sist-chip">@miDto.idProductosKit.Count @(miDto.idProductosKit.Count == 1 ? "unidad" : "unidades")</span>
+                                        }
+                                    </div>
+
+                                    @if (recetaSeleccionada.Count > 0)
+                                    {
+                                        <ul class="cp-kit-list">
+                                            @foreach (var item in recetaSeleccionada)
+                                            {
+                                                <li class="cp-kit-item" @key="item.Id">
+                                                    <span class="cp-kit-qty">@item.CantItems ×</span>
+                                                    <span class="cp-kit-item__name">@item.Nombre</span>
+                                                    <span class="cp-kit-item__price">@FormatoPrecio(item.Precio)</span>
+                                                    <button type="button" class="sist-btn sist-btn--danger-ghost sist-btn--sm" @onclick="() => RemoverComponente(item.Id)" aria-label="Quitar @item.Nombre">Quitar</button>
+                                                </li>
+                                            }
+                                        </ul>
+                                    }
+                                    else
+                                    {
+                                        <p class="sist-hint">Todavía no agregaste componentes.</p>
+                                    }
+
+                                    <div class="cp-search">
+                                        <input class="sist-input" type="search" name="busqueda-componente" form="@idFormBusqueda" @bind="terminoBusqueda" placeholder="Buscar producto por nombre o ID..." />
+                                        <button type="button" class="sist-btn sist-btn--secondary" @onclick="BuscarProducto">
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                <circle cx="11" cy="11" r="7"></circle>
+                                                <path d="m20 20-3.5-3.5"></path>
+                                            </svg>
+                                            Buscar
+                                        </button>
+                                    </div>
+
+                                    @if (!string.IsNullOrEmpty(busquedaState))
+                                    {
+                                        <p class="sist-hint" role="status">@busquedaState</p>
+                                    }
+
+                                    @if (productosBusqueda.Count > 0)
+                                    {
+                                        <ul class="cp-results">
+                                            @foreach (var producto in productosBusqueda)
+                                            {
+                                                <li class="cp-result" @key="producto.id">
+                                                    <div class="cp-result__info">
+                                                        <span class="cp-result__name">@producto.Nombre</span>
+                                                        <span class="cp-result__price">@FormatoPrecio(producto.Precio)</span>
+                                                        <span class="cp-result__id">#@producto.id</span>
+                                                    </div>
+                                                    <input class="sist-input sist-input--qty" type="number" name="cantidad-componente" min="1" step="1" @bind="currentCantProd" aria-label="Cantidad" />
+                                                    <button type="button" class="sist-btn sist-btn--secondary sist-btn--sm" @onclick="() => AddToProd(producto.id, currentCantProd)">
+                                                        + Agregar
+                                                    </button>
+                                                </li>
+                                            }
+                                        </ul>
+                                    }
+                                    else if (!string.IsNullOrWhiteSpace(terminoBusqueda) && string.IsNullOrEmpty(busquedaState))
+                                    {
+                                        <p class="sist-hint">No encontramos productos con ese nombre.</p>
+                                    }
+                                </section>
+                            }
+                        </div>
+                    </div>
+
+                    <footer class="sist-modal__footer">
+                        <p class="sist-modal__note">Podés cancelar sin guardar cambios.</p>
+                        <div class="sist-actions">
+                            <button type="button" class="sist-btn sist-btn--ghost" @onclick="Cerrar">Cancelar</button>
+                            <button type="submit" class="sist-btn sist-btn--primary" disabled="@guardando">
+                                @if (guardando)
+                                {
+                                    <span>Guardando...</span>
+                                }
+                                else
+                                {
+                                    <span aria-hidden="true">✦</span>
+                                    <span>Guardar producto</span>
+                                }
+                            </button>
+                        </div>
+                    </footer>
+                </div>
+            </div>
+        </EditForm>
+
+        @* Formulario externo: Enter busca componentes sin enviar el producto. *@
+        <form id="@idFormBusqueda" @onsubmit="BuscarProducto" @onsubmit:preventDefault="true">
+            <button type="submit" class="sist-sr-only" tabindex="-1" aria-hidden="true">Buscar</button>
+        </form>
+        #endregion
+    }
+    else
+    {
+        #region Carga finalizada
+
+
         <div class="sist-overlay" @onclick="CerrarPorOverlay">
-            <div class="sist-modal sist-modal--lg" role="dialog" aria-modal="true" aria-labelledby="crear-producto-title" tabindex="0" @ref="panelRef" @onkeydown="ManejarTecla" @onclick:stopPropagation="true">
+            <div class="sist-modal sist-modal--sm" role="dialog" aria-modal="true"
+                 aria-labelledby="cp-done-title" tabindex="0"
+                 @ref="panelRef" @onkeydown="ManejarTecla" @onclick:stopPropagation="true">
+
                 <header class="sist-modal__header">
                     <div class="sist-modal__header-copy">
-                        <h3 class="sist-modal__title" id="crear-producto-title">Cargar producto</h3>
-                        <p class="sist-modal__subtitle">Completá la ficha y sumá las fotos.</p>
+                        <h3 class="sist-modal__title" id="cp-done-title">
+                            @(miDto.DTO.tipoProd == TipoProd.Kit ? "Kit guardado" : "Producto guardado")
+                        </h3>
+                        <p class="sist-modal__subtitle">Ya está en el catálogo.</p>
                     </div>
                     <button type="button" class="sist-icon-btn" @onclick="Cerrar" aria-label="Cerrar">×</button>
                 </header>
 
                 <div class="sist-modal__body">
-                    @if (!string.IsNullOrEmpty(errorGuardado))
-                    {
-                        <div class="sist-alert sist-alert--error" role="alert">@errorGuardado</div>
-                    }
-
-                    <div class="cp-layout">
-                        <div class="cp-fields">
-                            <label class="sist-field">
-                                <span class="sist-label">Nombre</span>
-                                <InputText class="sist-input" @bind-Value="miDto.DTO.Nombre" placeholder="Kit cumpleaños"/>
-                                <ValidationMessage For="@(() => miDto.DTO.Nombre)"/>
-                            </label>
-
-                            <label class="sist-field">
-                                <span class="sist-label">Subtítulo <span class="sist-optional">(opcional)</span></span>
-                                <InputText class="sist-input" @bind-Value="miDto.DTO.Subtitulo" placeholder="Para armar entre todos"></InputText>
-                                <ValidationMessage For="@(() => miDto.DTO.Subtitulo)" />
-                            </label>
-
-                            <div class="sist-field">
-                                <span class="sist-label" id="tipo-producto-label">Tipo de producto</span>
-                                <InputRadioGroup TValue="TipoProd"
-                                                 Value="@miDto.DTO.tipoProd"
-                                                 ValueChanged="CambiarTipo"
-                                                 ValueExpression="@(() => miDto.DTO.tipoProd)">
-
-                                    <div class="sist-segment" role="group" aria-labelledby="tipo-producto-label">
-                                        <label class="sist-segment__option @(miDto.DTO.tipoProd == TipoProd.Producto ? "is-active" : "")">
-                                            <InputRadio Value="TipoProd.Producto" class="sist-input-radio" />
-                                            Producto individual
-                                        </label>
-
-                                        <label class="sist-segment__option @(miDto.DTO.tipoProd == TipoProd.Kit ? "is-active" : "")">
-                                            <InputRadio Value="TipoProd.Kit" class="sist-input-radio" />
-                                            Kit
-                                        </label>
-                                    </div>
-
-                                </InputRadioGroup>
-                            </div>
-
-                            <label class="sist-field">
-                                <span class="sist-label">Descripción</span>
-                                <InputTextArea class="sist-textarea" rows="3" @bind-Value="miDto.DTO.Descripcion" placeholder="Qué incluye, para qué edad, cómo se usa..." />
-                                <ValidationMessage For="@(() => miDto.DTO.Descripcion)"/>
-                            </label>
-
-                            <div class="cp-row">
-                                <label class="sist-field">
-                                    <span class="sist-label">Precio</span>
-                                    <span class="sist-input-wrap">
-                                        <span aria-hidden="true">$</span>
-                                        <InputNumber class="sist-input sist-input--bare" @bind-Value="miDto.DTO.Precio" placeholder="0"/>
-                                    </span>
-                                </label>
-                                <label class="sist-field">
-                                    <span class="sist-label">Stock</span>
-                                    <span class="sist-input-wrap">
-                                        <InputNumber class="sist-input sist-input--bare" @bind-Value="miDto.DTO.Stock" placeholder="0" />
-                                    </span>
-                                </label>
-                            </div>
-
-                            @* Avisos fuera del grid de dos columnas: no deforman al campo vecino. *@
-                            <div class="cp-row__avisos" aria-live="polite">
-                                <ValidationMessage For="@(() => miDto.DTO.Precio)"/>
-                                <ValidationMessage For="@(() => miDto.DTO.Stock)" />
-                            </div>
-                        </div>
-
-                        <aside class="cp-media">
-                            <div class="sist-section-title">Fotos</div>
-                            <label class="sist-dropzone">
-                                <InputFile @key="keyId" id="fotos-producto" OnChange="CargarImagenes" multiple accept="image/png, image/jpeg, image/webp" class="sist-file-input" />
-                                <span class="sist-dropzone__icon" aria-hidden="true">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <rect x="3" y="3" width="18" height="18" rx="3"></rect>
-                                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                                        <path d="m21 15-5-5L5 21"></path>
-                                    </svg>
-                                </span>
-                                <span class="sist-dropzone__title">Subir fotos</span>
-                                <span class="sist-dropzone__hint">JPG, PNG o WebP · hasta 5 MB</span>
-                            </label>
-                            <p class="sist-hint">Hasta 5 fotos. La primera se usa como portada.</p>
-
-                            @if (!string.IsNullOrEmpty(mensajeFotos))
+                    <div class="cp-done">
+                        <div class="cp-done__preview">
+                            @if (!string.IsNullOrEmpty(PortadaSeleccionada))
                             {
-                                <div class="sist-alert sist-alert--error" role="alert">@mensajeFotos</div>
-                            }
-
-                            @if (imagenesSeleccionadas.Count > 0)
-                            {
-                                <div class="sist-photo-grid">
-                                    @for (var i = 0; i < imagenesSeleccionadas.Count; i++)
-                                    {
-                                        var img = imagenesSeleccionadas[i];
-                                        <div class="sist-photo" @key="img.Id">
-                                            <img src="@img.url" alt="Foto seleccionada @(i + 1)" />
-                                            @if (i == 0)
-                                            {
-                                                <span class="sist-photo__cover">Portada</span>
-                                            }
-                                            <button type="button" class="sist-photo__remove" @onclick="() => RemoverImagen(img.Id)" aria-label="Quitar foto">×</button>
-                                        </div>
-                                    }
-
-                                    @if (imagenesSeleccionadas.Count < 5)
-                                    {
-                                        <label class="sist-photo sist-photo--add" for="fotos-producto">
-                                            <span aria-hidden="true">+</span>
-                                            <span class="sist-sr-only">Agregar otra foto</span>
-                                        </label>
-                                    }
+                                <div class="cp-done__cover">
+                                    <img src="@PortadaSeleccionada" alt="Portada de @miDto.DTO.Nombre" />
                                 </div>
                             }
-                        </aside>
+                            else
+                            {
+                                <div class="cp-done__cover cp-done__cover--vacia" aria-hidden="true">✦</div>
+                            }
 
-                        @if (miDto.DTO.tipoProd == TipoProd.Kit)
-                        {
-                            <section class="cp-kit">
-                                <div class="cp-kit__head">
-                                    <div>
-                                        <div class="sist-section-title">Receta del kit</div>
-                                        <p class="sist-hint">Buscá productos y agregá las cantidades.</p>
-                                    </div>
-                                    @if (miDto.idProductosKit.Count > 0)
-                                    {
-                                        <span class="sist-chip">@miDto.idProductosKit.Count @(miDto.idProductosKit.Count == 1 ? "unidad" : "unidades")</span>
-                                    }
-                                </div>
+                            <p class="cp-done__nombre">@miDto.DTO.Nombre</p>
 
-                                @if (recetaSeleccionada.Count > 0)
+                            <div class="cp-done__meta">
+                                @if (miDto.DTO.tipoProd == TipoProd.Kit)
                                 {
-                                    <ul class="cp-kit-list">
-                                        @foreach (var item in recetaSeleccionada)
-                                        {
-                                            <li class="cp-kit-item" @key="item.Id">
-                                                <span class="cp-kit-qty">@item.CantItems ×</span>
-                                                <span class="cp-kit-item__name">@item.Nombre</span>
-                                                <span class="cp-kit-item__price">@FormatoPrecio(item.Precio)</span>
-                                                <button type="button" class="sist-btn sist-btn--danger-ghost sist-btn--sm" @onclick="() => RemoverComponente(item.Id)" aria-label="Quitar @item.Nombre">Quitar</button>
-                                            </li>
-                                        }
-                                    </ul>
+                                    <span class="sist-badge sist-badge--kit"><span aria-hidden="true">✦</span> Kit</span>
                                 }
                                 else
                                 {
-                                    <p class="sist-hint">Todavía no agregaste componentes.</p>
+                                    <span class="sist-badge sist-badge--producto">Producto</span>
                                 }
+                                <span class="sist-price-tag">@FormatoPrecio(miDto.DTO.Precio)</span>
+                            </div>
+                        </div>
 
-                                <div class="cp-search">
-                                    <input class="sist-input" type="search" name="busqueda-componente" form="@idFormBusqueda" @bind="terminoBusqueda" placeholder="Buscar producto por nombre o ID..." />
-                                    <button type="button" class="sist-btn sist-btn--secondary" @onclick="BuscarProducto">
-                                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                            <circle cx="11" cy="11" r="7"></circle>
-                                            <path d="m20 20-3.5-3.5"></path>
-                                        </svg>
-                                        Buscar
-                                    </button>
-                                </div>
-
-                                @if (!string.IsNullOrEmpty(busquedaState))
-                                {
-                                    <p class="sist-hint" role="status">@busquedaState</p>
-                                }
-
-                                @if (productosBusqueda.Count > 0)
-                                {
-                                    <ul class="cp-results">
-                                        @foreach (var producto in productosBusqueda)
-                                        {
-                                            <li class="cp-result" @key="producto.id">
-                                                <div class="cp-result__info">
-                                                    <span class="cp-result__name">@producto.Nombre</span>
-                                                    <span class="cp-result__price">@FormatoPrecio(producto.Precio)</span>
-                                                    <span class="cp-result__id">#@producto.id</span>
-                                                </div>
-                                                <input class="sist-input sist-input--qty" type="number" name="cantidad-componente" min="1" step="1" @bind="currentCantProd" aria-label="Cantidad" />
-                                                <button type="button" class="sist-btn sist-btn--secondary sist-btn--sm" @onclick="() => AddToProd(producto.id, currentCantProd)">
-                                                    + Agregar
-                                                </button>
-                                            </li>
-                                        }
-                                    </ul>
-                                }
-                                else if (!string.IsNullOrWhiteSpace(terminoBusqueda) && string.IsNullOrEmpty(busquedaState))
-                                {
-                                    <p class="sist-hint">No encontramos productos con ese nombre.</p>
-                                }
-                            </section>
+                        @if (!string.IsNullOrWhiteSpace(mensajeDeCarga))
+                        {
+                            <p class="cp-done__mensaje">
+                                <span class="cp-done__tick" aria-hidden="true">✓</span>
+                                <span>@mensajeDeCarga</span>
+                            </p>
                         }
                     </div>
                 </div>
 
                 <footer class="sist-modal__footer">
-                    <p class="sist-modal__note">Podés cancelar sin guardar cambios.</p>
                     <div class="sist-actions">
-                        <button type="button" class="sist-btn sist-btn--ghost" @onclick="Cerrar">Cancelar</button>
-                        <button type="submit" class="sist-btn sist-btn--primary" disabled="@guardando">
-                            @if (guardando)
-                            {
-                                <span>Guardando...</span>
-                            }
-                            else
-                            {
-                                <span aria-hidden="true">✦</span>
-                                <span>Guardar producto</span>
-                            }
-                        </button>
+                        <a class="sist-btn sist-btn--secondary" href="#">Ver el catálogo</a>
+                        <button type="button" class="sist-btn sist-btn--primary" @onclick="CargarOtro">Cargar otro</button>
                     </div>
                 </footer>
             </div>
         </div>
-    </EditForm>
+        #endregion 
+    }
 
-    @* Formulario externo: Enter busca componentes sin enviar el producto. *@
-    <form id="@idFormBusqueda" @onsubmit="BuscarProducto" @onsubmit:preventDefault="true">
-        <button type="submit" class="sist-sr-only" tabindex="-1" aria-hidden="true">Buscar</button>
-    </form>
 }
 
 @code {
@@ -255,6 +330,7 @@
     };
 
     private EditContext editContext = default!;
+    private bool cargaFinalizada = false;
     private readonly string idFormBusqueda = $"cp-search-{Guid.NewGuid():N}";
     public CUProductoRequestDTO miDto = new CUProductoRequestDTO();
     public List<ProductoPrivadoDTO> productosBusqueda = new List<ProductoPrivadoDTO>();
@@ -262,6 +338,7 @@
     private List<ImagenSeleccionada> imagenesSeleccionadas = new List<ImagenSeleccionada>();
     private string terminoBusqueda = string.Empty;
     private string busquedaState = string.Empty;
+    private string? mensajeDeCarga;
     private string? mensajeFotos;
     private string? errorGuardado;
     private bool guardando;
@@ -275,6 +352,7 @@
     private static string FormatoPrecio(decimal precio) =>
         precio.ToString("$ #,##0.##", CultureInfo.GetCultureInfo("es-AR"));
 
+    #region Metodos Estados Componente
     protected override void OnInitialized()
     {
         ReiniciarFormulario();
@@ -303,7 +381,9 @@
             }
         }
     }
+    #endregion
 
+    #region Limpiar Form
     private void ReiniciarFormulario()
     {
         miDto = new CUProductoRequestDTO { DTO = new ProductoPrivadoDTO() };
@@ -317,6 +397,7 @@
         busquedaState = string.Empty;
         mensajeFotos = null;
         errorGuardado = null;
+        cargaFinalizada = false;
         guardando = false;
         currentCantProd = 1;
         focoAplicado = false;
@@ -330,6 +411,8 @@
         productosBusqueda.Clear();
         mensajeFotos = null;
         errorGuardado = null;
+        mensajeDeCarga = null;
+        cargaFinalizada = false;
         guardando = false;
         focoAplicado = false;
         await VisibleChanged.InvokeAsync(false);
@@ -347,6 +430,7 @@
             await Cerrar();
         }
     }
+    #endregion
 
     public async Task BuscarProducto()
     {
@@ -388,12 +472,30 @@
         StateHasChanged();
     }
 
+
     public async Task ChangeMessage(string newMessage)
     {
         busquedaState = newMessage;
         StateHasChanged();
         await Task.Delay(1000);
         busquedaState = string.Empty;
+        StateHasChanged();
+    }
+
+    private void SystemStateMessage(HttpResp<string> response)
+    {
+        // En éxito el body del API es el payload, no un error: va en Data.
+        mensajeDeCarga = string.IsNullOrWhiteSpace(response.Data)
+            ? "Producto creado exitosamente."
+            : response.Data;
+    }
+
+    private string? PortadaSeleccionada => imagenesSeleccionadas.FirstOrDefault()?.url;
+
+    private void CargarOtro()
+    {
+        ReiniciarFormulario();
+        keyId++;
         StateHasChanged();
     }
 
@@ -428,14 +530,24 @@
 
             var response = await http.PostFormDataAsync("api/producto/crear", formData);
 
-            if (response)
+            if (response.IsSuccess)
             {
+                SystemStateMessage(response);
+                cargaFinalizada = true;
+                focoAplicado = false;
                 await OnCreado.InvokeAsync();
-                await Cerrar();
             }
             else
             {
-                errorGuardado = "No pudimos guardar el producto. Revisá los datos e intentá de nuevo.";
+                if(response is not null)
+                {
+                    errorGuardado = response.Message;
+                }
+                else
+                {
+
+                    errorGuardado = "Sin respuesta por parte del servidor.";
+                }
             }
         }
         catch
@@ -449,6 +561,7 @@
         }
     }
 
+    #region Manejo Imagenes
     private async Task CargarImagenes(InputFileChangeEventArgs e)
     {
         mensajeFotos = null;
@@ -515,6 +628,7 @@
         mensajeFotos = null;
         StateHasChanged();
     }
+    #endregion
 
     private void AddToProd(int id, int cant)
     {

@@ -30,25 +30,30 @@ namespace sisstudioWA.Server.Controllers
         [HttpGet] // api/producto
         public async Task<ActionResult<List<ProductoPublicoDTO>>> ListaProductosClientes()
         {
-
             var productos = await repositorio.Select();
 
-            List<ProductoPublicoDTO> productoPublicoDTOs = new List<ProductoPublicoDTO>();
-
-            foreach (var product in productos)
+            if(productos is not null)
             {
-                ProductoPublicoDTO publico = new ProductoPublicoDTO();
-                publico.Nombre = product.Nombre;
-                publico.Subtitulo = product.Subtitulo;
-                publico.Descripcion = product.Descripcion;
-                publico.Imagenes = ImagenesExistentes(product.Imagenes);
-                publico.Precio = product.Precio;
-                publico.HayStock = (product.Stock > 0);
-                publico.tipoProd = product.tipoProd;
-                productoPublicoDTOs.Add(publico);
+                List<ProductoPublicoDTO> productoPublicoDTOs = new List<ProductoPublicoDTO>();
+
+                foreach (var product in productos)
+                {
+                    ProductoPublicoDTO publico = new ProductoPublicoDTO();
+                    publico.Id = product.Id;
+                    publico.Nombre = product.Nombre;
+                    publico.Subtitulo = product.Subtitulo;
+                    publico.Descripcion = product.Descripcion;
+                    publico.Imagenes = ImagenesExistentes(product.Imagenes);
+                    publico.Precio = product.Precio;
+                    publico.HayStock = (product.Stock > 0);
+                    publico.tipoProd = product.tipoProd;
+                    productoPublicoDTOs.Add(publico);
+                }
+
+                return Ok(productoPublicoDTOs);
             }
 
-            return Ok(productoPublicoDTOs);
+            return BadRequest();
         }
 
         [HttpGet("admin")]

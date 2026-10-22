@@ -754,9 +754,15 @@
             formData.Add(new StringContent(JsonSerializer.Serialize(DTO)), "producto");
 
             var response = await http.UpdateFormDataAsync(url, formData);
-            if (!response)
+            if (!response.IsSuccess)
             {
-                errorGuardado = "No pudimos guardar los cambios. Revisá los datos e intentá de nuevo.";
+                // En un 5xx el body puede ser el stack trace: no se muestra al usuario.
+                var esErrorDeServidor = response.Response is not null
+                    && (int)response.Response.StatusCode >= 500;
+
+                errorGuardado = esErrorDeServidor || string.IsNullOrWhiteSpace(response.Message)
+                    ? "No pudimos guardar los cambios. Revisá los datos e intentá de nuevo."
+                    : response.Message;
                 return;
             }
 

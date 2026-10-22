@@ -1,14 +1,79 @@
 ﻿@page "/"
+@using sisstudioWA.Servicios.ServicioHttp
+@using sisstudioWA.Shared.DTO
 @inject NavigationManager navigationManager
+@inject IHttpService http
 
 <div>
     <button @onclick="@(() => navigationManager.NavigateTo("/productosadmin"))">Panel de Administrador</button>
 </div>
 
 <div>
-    <p>Productos: </p>
+    @if(productos is not null)
+    {
+        <p>Productos: </p>
+        @foreach(var prod in productos)
+        {
+            <img src="@prod.Imagenes.FirstOrDefault()"/>
+            <p>Nombre: @prod.Nombre</p>
+            <p>Subtitulo: @prod.Subtitulo</p>
+            <p>Descripción: @prod.Descripcion</p>
+
+            <p>Precio @prod.Precio</p>
+            @if (prod.HayStock)
+            {
+                <p>Disponible!</p>
+            }
+            else
+            {
+                <p>No disponible.</p>
+            }
+        }
+    }
+    else
+    {
+        @if(error && !string.IsNullOrEmpty(errorMsg))
+        {
+            <p>Error: @errorMsg</p>
+        }
+        else
+        {
+            <p>Cargando...</p>
+        }
+
+    }
+
 </div>
 
 @code {
+    private List<ProductoPublicoDTO>? productos;
+    private string? errorMsg;
+    private bool error = false;
 
+    protected override async void OnInitialized()
+    {
+        await GetProductos();
+    }
+
+    public async Task GetProductos()
+    {
+        var response = await http.GetAsync<List<ProductoPublicoDTO>>("api/producto");
+
+        if(response.IsSuccess)
+        {
+            productos = response.Data;
+        }
+        else
+        {
+            error = true;
+            errorMsg = response.Message;
+        }
+
+        StateHasChanged();
+    }
+
+    public async Task VerProducto(ProductoPublicoDTO prod)
+    {
+        
+    }
 }

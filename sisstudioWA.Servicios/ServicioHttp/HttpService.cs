@@ -106,48 +106,51 @@ namespace sisstudioWA.Servicios.ServicioHttp
             }
         }
 
-        public async Task<bool> PostFormDataAsync(string url, MultipartFormDataContent data)
+        public async Task<HttpResp<string>> PostFormDataAsync(string url, MultipartFormDataContent data)
         {
             try
             {
                 var response = await http.PostAsync(url, data);
 
+                var content = await response.Content.ReadAsStringAsync();
+
                 if (response.IsSuccessStatusCode)
                 {
-                    return true;
+
+                    return new HttpResp<string>(true, string.Empty, content, response);
                 }
                 else
                 {
-                    return false;
+                    return new HttpResp<string>(false, content, string.Empty, response);
                 }
             }
-            catch
+            catch(Exception e)
             {
-                return false;
+                return new HttpResp<string>(false, e.Message, string.Empty, null);
             }
         }
 
-        public async Task<bool> UpdateFormDataAsync(string url, MultipartFormDataContent data)
+        public async Task<HttpResp<string>> UpdateFormDataAsync(string url, MultipartFormDataContent data)
         {
             try
             {
                 var response = await http.PutAsync(url, data);
+
+                var content = await response.Content.ReadAsStringAsync();
             if (response.IsSuccessStatusCode)
             {
-                return true;
+                return new HttpResp<string>(true, string.Empty, content, response);
             }
             else
             {
-                var error = await response.Content.ReadAsStringAsync();
-                Console.WriteLine($"PostFormData error {response.StatusCode}: {error}");
-                return false;
+                return new HttpResp<string>(false, content, string.Empty, response);
             }
 
             }
-            catch
+            catch(Exception e)
             {
 
-                return false;
+                return new HttpResp<string>(false, e.Message, string.Empty, null);
             }
         }
 
