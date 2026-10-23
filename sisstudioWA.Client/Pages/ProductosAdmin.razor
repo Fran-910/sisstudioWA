@@ -4,6 +4,8 @@
 @using sisstudioWA.Shared.Enum
 @inject IHttpService http
 
+<PageTitle>Panel · SIST Creative Studio</PageTitle>
+
 <section class="admin">
     <header class="sist-page-head">
         <div>
@@ -17,6 +19,9 @@
             }
         </div>
         <div class="sist-page-actions">
+            <a class="sist-btn sist-btn--secondary" href="/">
+                <span aria-hidden="true">←</span> Ver catálogo público
+            </a>
             <button type="button" class="sist-btn sist-btn--primary" @onclick="AbrirCrear">
                 <span aria-hidden="true">+</span> Cargar producto
             </button>

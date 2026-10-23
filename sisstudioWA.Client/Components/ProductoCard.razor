@@ -1,0 +1,72 @@
+﻿@using System.Globalization
+@using sisstudioWA.Shared.DTO
+@using sisstudioWA.Shared.Enum
+
+@if (prod is not null)
+{
+    <button type="button" class="card" @onclick="OnClick" aria-label="Ver ficha de @prod.Nombre">
+        <span class="card__media">
+            <span class="card__media-ph" aria-hidden="true">✦</span>
+            @if (prod.Imagenes is { Count: > 0 })
+            {
+                <img class="card__img" src="@prod.Imagenes[0]" alt="Foto de @prod.Nombre" loading="lazy" onerror="this.remove()" />
+            }
+            @if (prod.Imagenes is { Count: > 1 })
+            {
+                <img class="card__img card__img--hover" src="@prod.Imagenes[1]" alt="" loading="lazy" onerror="this.remove()" />
+            }
+            @if (prod.tipoProd == TipoProd.Kit || !prod.HayStock)
+            {
+                <span class="card__badges">
+                    @if (prod.tipoProd == TipoProd.Kit)
+                    {
+                        <span class="card__badge"><span aria-hidden="true">✦</span> Kit</span>
+                    }
+                    @if (!prod.HayStock)
+                    {
+                        <span class="card__badge card__badge--out">Sin stock</span>
+                    }
+                </span>
+            }
+        </span>
+
+        <span class="card__body">
+            <span class="card__name">@prod.Nombre</span>
+
+            @if (!string.IsNullOrWhiteSpace(prod.Subtitulo))
+            {
+                <span class="card__subtitle">@prod.Subtitulo</span>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(prod.Descripcion))
+            {
+                <span class="card__desc">@prod.Descripcion</span>
+            }
+
+            <span class="card__footer">
+                <span class="card__price">@FormatoPrecio(prod.Precio)</span>
+                <span class="card__stock @(prod.HayStock ? "is-available" : "is-out")">
+                    <span class="card__dot" aria-hidden="true"></span>
+                    @(prod.HayStock ? "Disponible" : "No disponible")
+                </span>
+            </span>
+
+            <span class="card__cta" aria-hidden="true">
+                Ver ficha <span class="card__cta-arrow">↗</span>
+            </span>
+        </span>
+    </button>
+}
+
+@code {
+    [Parameter] public EventCallback AbrirProd { get; set; }
+    [Parameter] public ProductoPublicoDTO? prod { get; set; }
+
+    private static string FormatoPrecio(decimal precio) =>
+        precio.ToString("$ #,##0.##", CultureInfo.GetCultureInfo("es-AR"));
+
+    public void OnClick()
+    {
+        AbrirProd.InvokeAsync();
+    }
+}

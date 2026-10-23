@@ -198,6 +198,12 @@
 }
 
 @media (max-width: 480px) {
+    .sist-page-actions .sist-btn {
+        padding-inline: 0.55rem;
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
+
     .admin-row {
         grid-template-columns: 56px minmax(0, 1fr);
         padding: 0.9rem;

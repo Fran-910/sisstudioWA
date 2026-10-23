@@ -1,0 +1,313 @@
+.vp-detail {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: 1.75rem;
+    align-items: start;
+}
+
+.vp-gallery {
+    display: grid;
+    gap: 0.6rem;
+    min-width: 0;
+}
+
+.vp-main {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 4 / 5;
+    border: 1px solid var(--sist-line);
+    border-radius: 20px;
+    background:
+        radial-gradient(circle at 30% 18%, rgba(255, 255, 255, 0.92), transparent 55%),
+        linear-gradient(160deg, var(--sist-blush-soft), var(--sist-blush));
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+    overflow: hidden;
+}
+
+.vp-main img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.35s ease;
+}
+
+.vp-main__fallback {
+    color: var(--sist-pink);
+    font-size: 2rem;
+    opacity: 0.55;
+}
+
+.vp-main--empty {
+    display: grid;
+    place-items: center;
+    gap: 0.35rem;
+    border-style: dashed;
+    background: #FFF9FC;
+    color: var(--sist-pink-strong);
+    font-size: 0.875rem;
+    text-align: center;
+}
+
+.vp-main--empty span:first-child {
+    font-size: 2rem;
+}
+
+.vp-nav {
+    position: absolute;
+    top: 50%;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid var(--sist-line);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.86);
+    color: var(--sist-ink);
+    font-size: 1.5rem;
+    line-height: 1;
+    transform: translateY(-50%);
+    box-shadow: 0 4px 14px rgba(56, 16, 30, 0.14);
+    backdrop-filter: blur(6px);
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.vp-nav:hover {
+    background: var(--sist-white);
+    border-color: var(--sist-pink);
+}
+
+.vp-nav--prev {
+    left: 0.6rem;
+}
+
+.vp-nav--next {
+    right: 0.6rem;
+}
+
+.vp-thumbs {
+    display: flex;
+    gap: 0.45rem;
+    padding: 0.15rem 0.1rem;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    scrollbar-color: var(--sist-line-strong) transparent;
+}
+
+.vp-thumb {
+    flex: none;
+    width: 56px;
+    aspect-ratio: 4 / 5;
+    padding: 0;
+    border: 2px solid transparent;
+    border-radius: 10px;
+    background: var(--sist-blush);
+    opacity: 0.72;
+    overflow: hidden;
+    scroll-snap-align: start;
+    box-shadow: 0 2px 8px rgba(56, 16, 30, 0.08);
+    transition: opacity 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.vp-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.vp-thumb:hover,
+.vp-thumb.is-active {
+    border-color: var(--sist-pink);
+    opacity: 1;
+}
+
+.vp-thumb.is-active {
+    box-shadow: 0 0 0 2px var(--sist-white), 0 0 0 4px var(--sist-pink);
+}
+
+.vp-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    min-width: 0;
+}
+
+.vp-badges {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.vp-badges .sist-stock {
+    padding: 0.3rem 0.65rem;
+    border: 1px solid var(--sist-line);
+    border-radius: 999px;
+    background: var(--sist-white);
+}
+
+.vp-name {
+    font-size: clamp(1.6rem, 3vw, 2.05rem);
+    letter-spacing: -0.03em;
+    overflow-wrap: anywhere;
+}
+
+.vp-subtitle {
+    color: var(--sist-muted);
+    font-size: 0.95rem;
+}
+
+.vp-price-row {
+    padding: 0.2rem 0 0.3rem;
+}
+
+.vp-price-row .sist-price-tag {
+    padding: 0.45rem 0.9rem 0.45rem 1.2rem;
+    font-size: 1.15rem;
+}
+
+.vp-description {
+    max-width: 65ch;
+    color: var(--sist-ink-soft);
+    font-size: 0.95rem;
+    line-height: 1.75;
+    white-space: pre-line;
+}
+
+.vp-kit {
+    display: grid;
+    gap: 0.65rem;
+    margin-top: 0.9rem;
+    padding: 1rem;
+    border: 1px solid var(--sist-line);
+    border-radius: 16px;
+    background: #FFF9FC;
+}
+
+.vp-kit-list {
+    display: grid;
+    gap: 0.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.vp-kit-item {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 0.65rem;
+    border: 1px solid var(--sist-line);
+    border-radius: 12px;
+    background: var(--sist-white);
+    box-shadow: 0 2px 8px rgba(56, 16, 30, 0.06);
+}
+
+.vp-kit-qty {
+    display: inline-grid;
+    place-items: center;
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0 0.35rem;
+    border-radius: 999px;
+    background: var(--sist-blush);
+    color: var(--sist-pink-deep);
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.vp-kit-item__name {
+    min-width: 0;
+    color: var(--sist-ink);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.vp-kit-item__price {
+    color: var(--sist-pink-deep);
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+@media (hover: hover) {
+    .vp-main:not(.vp-main--empty):hover img {
+        transform: scale(1.02);
+    }
+}
+
+@media (max-width: 900px) {
+    .vp-detail {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1.25rem;
+    }
+
+    .vp-gallery {
+        width: 100%;
+        max-width: 420px;
+        margin-inline: auto;
+    }
+}
+
+@media (max-width: 760px) {
+    .vp-detail {
+        gap: 1rem;
+    }
+
+    .vp-gallery {
+        max-width: none;
+    }
+
+    .vp-main {
+        aspect-ratio: 4 / 3;
+    }
+
+    .vp-name {
+        font-size: clamp(1.45rem, 6vw, 1.8rem);
+    }
+
+    .vp-price-row .sist-price-tag {
+        font-size: 1.05rem;
+    }
+
+    .vp-kit {
+        padding: 0.85rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .vp-main {
+        aspect-ratio: 1 / 1;
+    }
+
+    .vp-thumb {
+        width: 48px;
+    }
+
+    .vp-kit-item {
+        grid-template-columns: auto minmax(0, 1fr);
+        row-gap: 0.15rem;
+    }
+
+    .vp-kit-item__price {
+        grid-column: 2;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .vp-main img,
+    .vp-nav,
+    .vp-thumb {
+        transition: none;
+    }
+
+    .vp-main:hover img {
+        transform: none;
+    }
+}

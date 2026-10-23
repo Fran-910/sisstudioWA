@@ -279,7 +279,7 @@ namespace sisstudioWA.Server.Controllers
 
             if (actualizado)
             {
-                return Ok(actualizado);
+                return Ok("Producto actualizado con exito!");
             }
             return BadRequest("Error al actualizar el producto: " + actualizado);
         }
@@ -352,7 +352,7 @@ namespace sisstudioWA.Server.Controllers
 
             if (actualizado)
             {
-                return Ok(actualizado);
+                return Ok("Producto actualizado con exito!");
             }
             else
             {

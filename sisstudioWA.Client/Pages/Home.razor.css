@@ -1,0 +1,430 @@
+/* Portada pública — vidriera de SIST Creative Studio. */
+
+.home {
+    display: grid;
+    gap: clamp(2.5rem, 6vw, 5rem);
+}
+
+/* Hero */
+
+.hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+    gap: clamp(1.5rem, 4vw, 4rem);
+    align-items: center;
+    padding-top: clamp(0.5rem, 2vw, 1.5rem);
+}
+
+.hero__copy {
+    max-width: 40rem;
+}
+
+.hero__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--sist-line);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.72);
+    color: var(--sist-pink-deep);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.hero__title {
+    max-width: 14ch;
+    margin-top: 1rem;
+    font-size: clamp(2.6rem, 5.6vw, 4.4rem);
+    line-height: 0.98;
+    letter-spacing: -0.045em;
+}
+
+.hero__title span {
+    color: var(--sist-pink-strong);
+}
+
+.hero__text {
+    max-width: 46ch;
+    margin-top: 1rem;
+    color: var(--sist-muted);
+    font-size: clamp(0.95rem, 1.5vw, 1.05rem);
+    line-height: 1.7;
+}
+
+.hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 1.5rem;
+}
+
+.hero__actions .sist-btn {
+    min-width: 150px;
+}
+
+.hero__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.1rem;
+    margin: 1.5rem 0 0;
+    padding: 0;
+    list-style: none;
+    color: var(--sist-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.hero__meta li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.hero__meta span {
+    color: var(--sist-pink);
+}
+
+.hero__visual {
+    position: relative;
+    display: grid;
+    place-items: center;
+    min-height: 380px;
+}
+
+.hero__blob {
+    position: absolute;
+    inset: 8% 0 0 8%;
+    border-radius: 52% 48% 44% 56% / 48% 42% 58% 52%;
+    background: radial-gradient(circle at 30% 25%, #FFFFFF, var(--sist-blush) 42%, var(--sist-pink) 100%);
+    opacity: 0.5;
+    filter: blur(2px);
+}
+
+.hero__frame {
+    position: relative;
+    z-index: 1;
+    width: min(78%, 360px);
+    aspect-ratio: 4 / 5;
+    padding: 0.5rem;
+    border-radius: 26px;
+    background: var(--sist-white);
+    box-shadow: 0 24px 60px rgba(56, 16, 30, 0.18);
+    transform: rotate(-3deg);
+    transition: transform 0.3s ease;
+}
+
+.hero__frame img {
+    width: 100%;
+    height: 100%;
+    border-radius: 20px;
+    object-fit: cover;
+}
+
+.hero__frame-ph {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 20px;
+    background: linear-gradient(160deg, var(--sist-blush-soft), var(--sist-blush));
+    color: var(--sist-pink);
+    font-size: 3rem;
+}
+
+.hero__sticker {
+    position: absolute;
+    right: 2%;
+    bottom: 9%;
+    z-index: 2;
+    padding: 0.55rem 0.9rem;
+    border-radius: 999px;
+    background: var(--sist-ink);
+    color: var(--sist-white);
+    font-size: 0.72rem;
+    font-weight: 700;
+    box-shadow: 0 10px 24px rgba(56, 16, 30, 0.22);
+    transform: rotate(4deg);
+}
+
+.hero__spark {
+    position: absolute;
+    z-index: 2;
+    color: var(--sist-pink);
+    font-size: 1.4rem;
+}
+
+.hero__spark--one {
+    top: 4%;
+    right: 10%;
+}
+
+.hero__spark--two {
+    bottom: 6%;
+    left: 6%;
+    font-size: 1rem;
+    opacity: 0.7;
+}
+
+/* Catálogo */
+
+.catalogo {
+    scroll-margin-top: 5.5rem;
+}
+
+.catalogo__head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.catalogo__head-copy {
+    min-width: 0;
+}
+
+.catalogo__eyebrow {
+    color: var(--sist-pink-deep);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.catalogo__title {
+    margin-top: 0.25rem;
+    font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+}
+
+.catalogo__filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    border: 1px solid var(--sist-line);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.66);
+}
+
+.catalogo__filter {
+    min-height: 36px;
+    padding: 0.35rem 0.85rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--sist-muted);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.catalogo__filter:hover {
+    background: var(--sist-blush);
+    color: var(--sist-ink);
+}
+
+.catalogo__filter.is-active {
+    border-color: var(--sist-line-strong);
+    background: var(--sist-white);
+    color: var(--sist-ink);
+    box-shadow: 0 2px 8px rgba(56, 16, 30, 0.10);
+}
+
+.catalogo__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+    gap: 1.5rem 1.25rem;
+    align-items: stretch;
+}
+
+.catalogo__grid--skeleton {
+    pointer-events: none;
+}
+
+.card-skeleton {
+    border: 1px solid var(--sist-line);
+    border-radius: 20px;
+    background: var(--sist-white);
+    box-shadow: var(--sist-shadow-soft);
+    overflow: hidden;
+}
+
+.card-skeleton__media {
+    aspect-ratio: 4 / 5;
+    border-radius: 0;
+}
+
+.card-skeleton__body {
+    display: grid;
+    gap: 0.5rem;
+    min-height: 118px;
+    padding: 1rem;
+}
+
+.catalogo__error {
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.catalogo__error .sist-btn {
+    flex: none;
+}
+
+/* Beneficios */
+
+.beneficios {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.beneficio {
+    display: grid;
+    align-content: start;
+    gap: 0.45rem;
+    padding: 1.25rem;
+    border: 1px solid var(--sist-line);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: var(--sist-shadow-soft);
+}
+
+.beneficio__icon {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--sist-blush);
+    color: var(--sist-pink-strong);
+    font-size: 1rem;
+}
+
+.beneficio__title {
+    margin-top: 0.15rem;
+    font-size: 1rem;
+}
+
+.beneficio__text {
+    color: var(--sist-muted);
+    font-size: 0.85rem;
+    line-height: 1.6;
+}
+
+@media (hover: hover) {
+    .hero__frame:hover {
+        transform: rotate(0deg);
+    }
+}
+
+@media (max-width: 900px) {
+    .hero {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .hero__copy {
+        max-width: 34rem;
+    }
+
+    .hero__title {
+        max-width: 14ch;
+    }
+
+    .hero__visual {
+        width: 100%;
+        max-width: 420px;
+        min-height: 0;
+        margin-inline: auto;
+        padding-top: 1rem;
+    }
+
+    .beneficios {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 760px) {
+    .hero__title {
+        font-size: clamp(2.35rem, 9vw, 3.2rem);
+    }
+
+    .hero__actions .sist-btn {
+        flex: 1;
+    }
+
+    .catalogo__head {
+        align-items: flex-start;
+    }
+
+    .catalogo__filters {
+        width: 100%;
+    }
+
+    .catalogo__filter {
+        flex: 1;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .beneficios {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .hero__eyebrow {
+        font-size: 0.65rem;
+    }
+
+    .hero__meta {
+        gap: 0.4rem 0.75rem;
+        font-size: 0.7rem;
+    }
+
+    .hero__visual {
+        max-width: 320px;
+    }
+
+    .hero__frame {
+        width: 84%;
+        border-radius: 22px;
+    }
+
+    .hero__frame img,
+    .hero__frame-ph {
+        border-radius: 16px;
+    }
+
+    .catalogo__grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 1rem;
+    }
+
+    .card-skeleton {
+        border-radius: 16px;
+    }
+
+    .card-skeleton__media {
+        aspect-ratio: 1 / 1;
+    }
+
+    .beneficio {
+        padding: 1rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hero__frame,
+    .catalogo__filter {
+        transition: none;
+    }
+
+    .hero__frame:hover {
+        transform: rotate(-3deg);
+    }
+}

@@ -1,9 +1,80 @@
 ﻿@using sisstudioWA.Servicios.ServicioHttp
 @using sisstudioWA.Shared.DTO
+@using sisstudioWA.Shared.Enum
 @inject IHttpService http
 
 @if (Visible)
 {
+    @if (eliminarFinalizado)
+    {
+        #region Carga finalizada
+
+        <div class="sist-overlay" @onclick="CerrarPorOverlay">
+            <div class="sist-modal sist-modal--sm" role="dialog" aria-modal="true"
+                 aria-labelledby="ep-done-title" tabindex="0"
+                 @ref="panelRef" @onkeydown="ManejarTecla" @onclick:stopPropagation="true">
+
+                <header class="sist-modal__header">
+                    <div class="sist-modal__header-copy">
+                        <h3 class="sist-modal__title" id="ep-done-title">
+                            @(TipoFinalizado == TipoProd.Kit ? "Kit eliminado" : "Producto eliminado")
+                        </h3>
+                        <p class="sist-modal__subtitle">Ya no está en el catálogo.</p>
+                    </div>
+                    <button type="button" class="sist-icon-btn" @onclick="Cerrar" aria-label="Cerrar">×</button>
+                </header>
+
+                <div class="sist-modal__body">
+                    <div class="ep-done">
+                        <div class="ep-done__preview">
+                            @if (!string.IsNullOrEmpty(PortadaFinalizada))
+                            {
+                                <div class="ep-done__cover">
+                                    <img src="@PortadaFinalizada" alt="Portada de @NombreFinalizado" onerror="this.remove()" />
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="ep-done__cover ep-done__cover--vacia" aria-hidden="true">✦</div>
+                            }
+
+                            <p class="ep-done__nombre">@NombreFinalizado</p>
+
+                            <div class="ep-done__meta">
+                                @if (TipoFinalizado == TipoProd.Kit)
+                                {
+                                    <span class="sist-badge sist-badge--kit"><span aria-hidden="true">✦</span> Kit</span>
+                                }
+                                else
+                                {
+                                    <span class="sist-badge sist-badge--producto">Producto</span>
+                                }
+                                <span class="sist-price-tag">@FormatoPrecio(PrecioFinalizado)</span>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(mensajeDeCarga))
+                        {
+                            <p class="ep-done__mensaje">
+                                <span class="ep-done__tick" aria-hidden="true">✓</span>
+                                <span>@mensajeDeCarga</span>
+                            </p>
+                        }
+                    </div>
+                </div>
+
+                <footer class="sist-modal__footer">
+                    <p class="sist-modal__note">La acción ya se completó.</p>
+                    <div class="sist-actions">
+                        <button type="button" class="sist-btn sist-btn--primary" @onclick="Cerrar">Cerrar</button>
+                    </div>
+                </footer>
+            </div>
+        </div>
+        #endregion
+    }
+    else
+    {
     <div class="sist-overlay" @onclick="CerrarPorOverlay">
         <div class="sist-modal sist-modal--sm" role="dialog" aria-modal="true" aria-labelledby="eliminar-producto-title" tabindex="0" @ref="panelRef" @onkeydown="ManejarTecla" @onclick:stopPropagation="true">
             <header class="sist-modal__header">
@@ -55,6 +126,7 @@
             </footer>
         </div>
     </div>
+    }
 }
 
 @code {
@@ -67,8 +139,23 @@
     private bool estabaVisible;
     private bool focoAplicado;
     private bool borrando;
+    private bool eliminarFinalizado;
+    private string? mensajeDeCarga;
     private string? errorEliminar;
+    private ProductoPrivadoDTO? productoEliminado;
 
+    private string NombreFinalizado => productoEliminado?.Nombre ?? string.Empty;
+
+    private TipoProd TipoFinalizado => productoEliminado?.tipoProd ?? TipoProd.Producto;
+
+    private decimal PrecioFinalizado => productoEliminado?.Precio ?? 0;
+
+    private string? PortadaFinalizada => productoEliminado?.Imagenes?.FirstOrDefault();
+
+    private static string FormatoPrecio(decimal precio) =>
+        precio.ToString("$ #,##0.##", CultureInfo.GetCultureInfo("es-AR"));
+
+    #region Metodos Estados Componente
     protected override async Task OnParametersSetAsync()
     {
         if (Visible && !estabaVisible)
@@ -76,6 +163,9 @@
             focoAplicado = false;
             errorEliminar = null;
             borrando = false;
+            eliminarFinalizado = false;
+            mensajeDeCarga = null;
+            productoEliminado = null;
         }
         estabaVisible = Visible;
 
@@ -99,6 +189,7 @@
             }
         }
     }
+    #endregion
 
     private async Task BorrarProducto(ProductoPrivadoDTO producto)
     {
@@ -110,8 +201,13 @@
             var response = await http.DeleteAsync<bool>($"api/producto/borrar/{producto.id}");
             if (response.IsSuccess)
             {
+                productoEliminado = producto;
+                mensajeDeCarga = producto.tipoProd == TipoProd.Kit
+                    ? "El kit se eliminó correctamente."
+                    : "El producto se eliminó correctamente.";
+                eliminarFinalizado = true;
+                focoAplicado = false;
                 await OnActualizado.InvokeAsync();
-                await Cerrar();
             }
             else
             {
@@ -129,11 +225,15 @@
         }
     }
 
+    #region Limpiar Form
     private async Task Cerrar()
     {
         focoAplicado = false;
         borrando = false;
+        eliminarFinalizado = false;
+        mensajeDeCarga = null;
         errorEliminar = null;
+        productoEliminado = null;
         await VisibleChanged.InvokeAsync(false);
     }
 
@@ -149,4 +249,5 @@
             await Cerrar();
         }
     }
+    #endregion
 }

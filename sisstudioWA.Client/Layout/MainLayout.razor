@@ -4,17 +4,31 @@
 
 <header class="sist-topbar">
     <div class="sist-topbar__inner">
-        <a class="sist-brand" href="/productosadmin" aria-label="SIST Creative Studio, ir al panel">
+        <a class="sist-brand" href="/" aria-label="SIST Creative Studio, ir al catálogo">
             <span class="sist-brand__mark">SIST<span class="sist-brand__spark" aria-hidden="true">✦</span></span>
             <span class="sist-brand__sub">creative studio</span>
         </a>
-        <span class="sist-chip">
-            <span class="sist-chip__full">Panel del estudio</span>
-            <span class="sist-chip__short">Panel</span>
-        </span>
+        <nav class="sist-nav" aria-label="Navegación principal">
+            <NavLink class="sist-nav__link" href="/" Match="NavLinkMatch.All">Catálogo</NavLink>
+            <NavLink class="sist-nav__link" href="/productosadmin" Match="NavLinkMatch.Prefix">Panel</NavLink>
+        </nav>
     </div>
 </header>
 
 <main id="contenido" class="sist-main">
     @Body
 </main>
+
+<footer class="site-footer">
+    <div class="site-footer__inner">
+        <div class="site-footer__brand-block">
+            <span class="site-footer__brand">SIST<span aria-hidden="true">✦</span></span>
+            <p class="site-footer__tagline">Kits y productos hechos en pequeños lotes, con mucho detalle.</p>
+        </div>
+        <nav class="site-footer__nav" aria-label="Enlaces del pie">
+            <a href="/">Catálogo</a>
+            <a href="/productosadmin">Panel del estudio</a>
+        </nav>
+        <p class="site-footer__legal">© @DateTime.Now.Year SIST Creative Studio</p>
+    </div>
+</footer>

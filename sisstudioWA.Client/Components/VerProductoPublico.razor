@@ -1,0 +1,267 @@
+@using System.Globalization
+@using sisstudioWA.Servicios.ServicioHttp
+@using sisstudioWA.Shared.DTO
+@using sisstudioWA.Shared.Enum
+@inject IHttpService http
+
+@if (Visible)
+{
+    <div class="sist-overlay" @onclick="CerrarPorOverlay">
+        <div class="sist-modal sist-modal--xl" role="dialog" aria-modal="true" aria-labelledby="ver-producto-title" tabindex="0" @ref="panelRef" @onkeydown="ManejarTecla" @onclick:stopPropagation="true">
+            <header class="sist-modal__header">
+                <div class="sist-modal__header-copy">
+                    <h3 class="sist-modal__title" id="ver-producto-title">Ficha del producto</h3>
+                    <p class="sist-modal__subtitle">Revisá los datos, las fotos y la receta del kit.</p>
+                </div>
+                <button type="button" class="sist-icon-btn" @onclick="Cerrar" aria-label="Cerrar">×</button>
+            </header>
+
+            <div class="sist-modal__body">
+                @if (Producto is null)
+                {
+                    <div class="sist-empty">
+                        <div class="sist-empty__spark" aria-hidden="true">✦</div>
+                        <h4 class="sist-empty__title">No hay un producto seleccionado</h4>
+                        <p class="sist-empty__text">Cerrá esta ventana y elegí un producto del catálogo.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="vp-detail">
+                        <div class="vp-gallery">
+                            @if (ImagenesProducto.Count > 0)
+                            {
+                                <div class="vp-main">
+                                    <span class="vp-main__fallback" aria-hidden="true">✦</span>
+                                    <img src="@ImagenActual" alt="Foto de @Producto.Nombre" onerror="this.remove()" />
+                                    @if (ImagenesProducto.Count > 1)
+                                    {
+                                        <button type="button" class="vp-nav vp-nav--prev" @onclick="() => MoverImagen(-1)" aria-label="Foto anterior">‹</button>
+                                        <button type="button" class="vp-nav vp-nav--next" @onclick="() => MoverImagen(1)" aria-label="Foto siguiente">›</button>
+                                    }
+                                </div>
+
+                                @if (ImagenesProducto.Count > 1)
+                                {
+                                    <div class="vp-thumbs">
+                                        @for (var i = 0; i < ImagenesProducto.Count; i++)
+                                        {
+                                            var index = i;
+                                            <button type="button" class="vp-thumb @(index == indiceImagen ? "is-active" : "")" @onclick="() => indiceImagen = index" aria-label="Ver foto @(index + 1)">
+                                                <img src="@ImagenesProducto[index]" alt="" onerror="this.style.visibility='hidden'" />
+                                            </button>
+                                        }
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="vp-main vp-main--empty">
+                                    <span aria-hidden="true">✦</span>
+                                    <span>Sin fotos todavía</span>
+                                </div>
+                            }
+                        </div>
+
+                        <div class="vp-info">
+                            <div class="vp-badges">
+                                @if (Producto.tipoProd == TipoProd.Kit)
+                                {
+                                    <span class="sist-badge sist-badge--kit"><span aria-hidden="true">✦</span> Kit</span>
+                                }
+                                else
+                                {
+                                    <span class="sist-badge sist-badge--producto">Producto</span>
+                                }
+
+                                @if (!Producto.HayStock)
+                                {
+                                    <span class="sist-badge sist-badge--danger">No disponible.</span>
+                                }
+                                else
+                                {
+                                    <span class="sist-stock"><span class="sist-dot sist-dot--ok"></span>Disponible.</span>
+                                }
+                            </div>
+
+                            <h4 class="vp-name">@Producto.Nombre</h4>
+
+                            @if (!string.IsNullOrWhiteSpace(Producto.Subtitulo))
+                            {
+                                <p class="vp-subtitle">@Producto.Subtitulo</p>
+                            }
+
+                            <div class="vp-price-row">
+                                <span class="sist-price-tag">@FormatoPrecio(Producto.Precio)</span>
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(Producto.Descripcion))
+                            {
+                                <p class="vp-description">@Producto.Descripcion</p>
+                            }
+
+                            @if (Producto.tipoProd == TipoProd.Kit)
+                            {
+                                <div class="vp-kit">
+                                    <div class="sist-section-title">Receta del kit</div>
+                                    @if (resultadosProcesados.Count > 0)
+                                    {
+                                        <ul class="vp-kit-list">
+                                            @foreach (var item in resultadosProcesados)
+                                            {
+                                                <li class="vp-kit-item" @key="item.Id">
+                                                    <span class="vp-kit-qty">@item.CantItems ×</span>
+                                                    <span class="vp-kit-item__name">@item.Nombre</span>
+                                                    <span class="vp-kit-item__price">@FormatoPrecio(item.Precio)</span>
+                                                </li>
+                                            }
+                                        </ul>
+                                    }
+                                    else
+                                    {
+                                        <p class="sist-hint">Este kit todavía no tiene componentes.</p>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <footer class="sist-modal__footer">
+                <div class="sist-actions">
+                    <button type="button" class="sist-btn sist-btn--ghost" @onclick="Cerrar">Cerrar</button>
+                </div>
+            </footer>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool Visible { get; set; }
+    [Parameter] public EventCallback<bool> VisibleChanged { get; set; }
+    [Parameter] public ProductoPublicoDTO? Producto { get; set; }
+
+    private readonly List<KitProdModelDTO> resultadosProcesados = new();
+    private ElementReference panelRef;
+    private bool estabaVisible;
+    private bool focoAplicado;
+    private int indiceImagen;
+    private int? productoKitCargadoId;
+
+    private List<string> ImagenesProducto => Producto?.Imagenes ?? new();
+
+    private string? ImagenActual
+    {
+        get
+        {
+            var imagenes = ImagenesProducto;
+            if (imagenes.Count == 0)
+            {
+                return null;
+            }
+
+            var indice = Math.Clamp(indiceImagen, 0, imagenes.Count - 1);
+            return imagenes[indice];
+        }
+    }
+
+    private static string FormatoPrecio(decimal precio) =>
+        precio.ToString("$ #,##0.##", CultureInfo.GetCultureInfo("es-AR"));
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Visible && !estabaVisible)
+        {
+            focoAplicado = false;
+            indiceImagen = 0;
+        }
+        estabaVisible = Visible;
+
+        if (!Visible)
+        {
+            productoKitCargadoId = null;
+            return;
+        }
+
+        if (Producto?.tipoProd == TipoProd.Kit && productoKitCargadoId != Producto.Id)
+        {
+            productoKitCargadoId = Producto.Id;
+            await CargarKitProductos();
+        }
+    }
+
+    private async Task CargarKitProductos()
+    {
+        resultadosProcesados.Clear();
+
+        if (Producto is null)
+        {
+            return;
+        }
+
+        var response = await http.GetAsync<List<ProductoPrivadoDTO>>($"api/producto/kit/{Producto.Id}");
+        if (response.IsSuccess && response.Data != null)
+        {
+            resultadosProcesados.AddRange(response.Data
+                .GroupBy(p => p.id)
+                .Select(grupo => new KitProdModelDTO()
+                {
+                    Id = grupo.Key,
+                    Nombre = grupo.First().Nombre,
+                    Precio = grupo.First().Precio,
+                    CantItems = grupo.Count()
+                }));
+
+            StateHasChanged();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Visible && !focoAplicado)
+        {
+            try
+            {
+                await panelRef.FocusAsync();
+                focoAplicado = true;
+            }
+            catch (InvalidOperationException)
+            {
+            }
+        }
+    }
+
+    private async Task Cerrar()
+    {
+        focoAplicado = false;
+        resultadosProcesados.Clear();
+        indiceImagen = 0;
+        productoKitCargadoId = null;
+        await VisibleChanged.InvokeAsync(false);
+    }
+
+    private async Task CerrarPorOverlay()
+    {
+        await Cerrar();
+    }
+
+    private async Task ManejarTecla(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            await Cerrar();
+        }
+    }
+
+    private void MoverImagen(int delta)
+    {
+        var total = ImagenesProducto.Count;
+        if (total == 0)
+        {
+            return;
+        }
+
+        indiceImagen = (indiceImagen + delta + total) % total;
+    }
+}

@@ -6,342 +6,413 @@
 
 @if (Visible)
 {
-    <EditForm EditContext="@editContext" OnValidSubmit="AplicarCambios">
-        <DataAnnotationsValidator />
+    @if (cargaFinalizada)
+    {
+        #region Carga finalizada
+
         <div class="sist-overlay" @onclick="CerrarPorOverlay">
-            <div class="sist-modal sist-modal--xl" role="dialog" aria-modal="true" aria-labelledby="ver-producto-title" tabindex="0" @ref="panelRef" @onkeydown="ManejarTecla" @onclick:stopPropagation="true">
+            <div class="sist-modal sist-modal--sm" role="dialog" aria-modal="true"
+                 aria-labelledby="vp-done-title" tabindex="0"
+                 @ref="panelRef" @onkeydown="ManejarTecla" @onclick:stopPropagation="true">
+
                 <header class="sist-modal__header">
                     <div class="sist-modal__header-copy">
-                        <h3 class="sist-modal__title" id="ver-producto-title">@(editarMode ? "Editar producto" : "Ficha del producto")</h3>
-                        <p class="sist-modal__subtitle">@(editarMode ? "Actualizá los datos y guardá los cambios." : "Revisá los datos, las fotos y la receta del kit.")</p>
+                        <h3 class="sist-modal__title" id="vp-done-title">
+                            @(TipoFinalizado == TipoProd.Kit ? "Kit actualizado" : "Producto actualizado")
+                        </h3>
+                        <p class="sist-modal__subtitle">Los cambios ya se guardaron.</p>
                     </div>
                     <button type="button" class="sist-icon-btn" @onclick="Cerrar" aria-label="Cerrar">×</button>
                 </header>
-    
-                <div class="sist-modal__body">
-                    @if (Producto is null)
-                    {
-                        <div class="sist-empty">
-                            <div class="sist-empty__spark" aria-hidden="true">✦</div>
-                            <h4 class="sist-empty__title">No hay un producto seleccionado</h4>
-                            <p class="sist-empty__text">Cerrá esta ventana y elegí un producto del catálogo.</p>
-                        </div>
-                    }
-                    else if (editarMode && DTO is not null)
-                    {
-                        @if (!string.IsNullOrEmpty(errorGuardado))
-                        {
-                            <div class="sist-alert sist-alert--error" role="alert">@errorGuardado</div>
-                        }
-    
-                        <div class="vp-edit">
-                            <div class="vp-edit__form">
-                                <div class="sist-section-title">Datos del producto</div>
-    
-                                <label class="sist-field">
-                                    <span class="sist-label">Nombre</span>
-                                    <InputText class="sist-input" @bind-Value="DTO.DTO.Nombre" />
-                                    <ValidationMessage For="@(() => DTO.DTO.Nombre)" />
-                                </label>
-    
-                                <label class="sist-field">
-                                    <span class="sist-label">Subtítulo <span class="sist-optional">(opcional)</span></span>
-                                    <InputText class="sist-input" @bind-Value="DTO.DTO.Subtitulo" />
-                                    <ValidationMessage For="@(() => DTO.DTO.Subtitulo)" />
-                                </label>
-    
-                                <label class="sist-field">
-                                    <span class="sist-label">Descripción</span>
-                                    <InputTextArea class="sist-textarea" rows="3" @bind-Value="DTO.DTO.Descripcion" />
-                                    <ValidationMessage For="@(() => DTO.DTO.Descripcion)" />
-                                </label>
-    
-                                <div class="vp-edit__row">
-                                    <label class="sist-field">
-                                        <span class="sist-label">Precio</span>
-                                        <span class="sist-input-wrap">
-                                            <span aria-hidden="true">$</span>
-                                            <InputNumber class="sist-input sist-input--bare" @bind-Value="DTO.DTO.Precio" placeholder="0" />
-                                        </span>
-                                    </label>
-                                    <label class="sist-field">
-                                        <span class="sist-label">Stock</span>
-                                        <span class="sist-input-wrap">
-                                            <InputNumber class="sist-input sist-input--bare" @bind-Value="DTO.DTO.Stock" placeholder="0" />
-                                            <span class="sist-suffix">u.</span>
-                                        </span>
-                                    </label>
-                                </div>
 
-                                @* Avisos fuera del grid de dos columnas: no deforman al campo vecino. *@
-                                <div class="vp-edit__avisos" aria-live="polite">
-                                    <ValidationMessage For="@(() => DTO.DTO.Precio)" />
-                                    <ValidationMessage For="@(() => DTO.DTO.Stock)" />
+                <div class="sist-modal__body">
+                    <div class="vp-done">
+                        <div class="vp-done__preview">
+                            @if (!string.IsNullOrEmpty(PortadaFinalizada))
+                            {
+                                <div class="vp-done__cover">
+                                    <img src="@PortadaFinalizada" alt="Portada de @NombreFinalizado" />
                                 </div>
-    
-                                @if (DTO.DTO.tipoProd == TipoProd.Kit)
+                            }
+                            else
+                            {
+                                <div class="vp-done__cover vp-done__cover--vacia" aria-hidden="true">✦</div>
+                            }
+
+                            <p class="vp-done__nombre">@NombreFinalizado</p>
+
+                            <div class="vp-done__meta">
+                                @if (TipoFinalizado == TipoProd.Kit)
                                 {
-                                    <div class="vp-kit vp-kit--edit">
-                                        <div class="vp-kit__head">
-                                            <div>
-                                                <div class="sist-section-title">Receta del kit</div>
-                                                <p class="sist-hint">Ajustá las cantidades o sumá componentes.</p>
-                                            </div>
-                                            @if (resultadosProcesados.Count > 0)
-                                            {
-                                                <span class="sist-chip">@resultadosProcesados.Sum(x => x.CantItems) unidades</span>
-                                            }
-                                        </div>
-    
-                                        @if (resultadosProcesados.Count > 0)
-                                        {
-                                            <ul class="vp-kit-list">
-                                                @foreach (var item in resultadosProcesados)
-                                                {
-                                                    <li class="vp-kit-item" @key="item.Id">
-                                                        <span class="vp-kit-item__name">@item.Nombre</span>
-                                                        <span class="vp-kit-item__price">@FormatoPrecio(item.Precio)</span>
-                                                        <input class="sist-input sist-input--qty" type="number" name="cantidad-componente" min="1" step="1" @bind="item.CantItems" aria-label="Cantidad de @item.Nombre" />
-                                                        <button type="button" class="vp-kit-remove" @onclick="() => RemoverComponente(item.Id)" aria-label="Quitar @item.Nombre">×</button>
-                                                    </li>
-                                                }
-                                            </ul>
-                                        }
-                                        else
-                                        {
-                                            <p class="sist-hint">Este kit todavía no tiene componentes.</p>
-                                        }
-    
-                                        <div class="vp-kit-search">
-                                            <input class="sist-input" type="search" name="busqueda-componente" form="@idFormBusqueda" @bind="terminoBusqueda" placeholder="Buscar producto por nombre o ID..." />
-                                            <button type="button" class="sist-btn sist-btn--secondary" @onclick="BuscarProducto">
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                                    <circle cx="11" cy="11" r="7"></circle>
-                                                    <path d="m20 20-3.5-3.5"></path>
-                                                </svg>
-                                                Buscar
-                                            </button>
-                                        </div>
-    
-                                        @if (!string.IsNullOrEmpty(busquedaState))
-                                        {
-                                            <p class="sist-hint" role="status">@busquedaState</p>
-                                        }
-    
-                                        @if (productosBusqueda.Count > 0)
-                                        {
-                                            <ul class="vp-kit-results">
-                                                @foreach (var producto in productosBusqueda)
-                                                {
-                                                    <li class="vp-kit-result" @key="producto.id">
-                                                        <div class="vp-kit-result__info">
-                                                            <span class="vp-kit-result__name">@producto.Nombre</span>
-                                                            <span class="vp-kit-result__price">@FormatoPrecio(producto.Precio)</span>
-                                                            <span class="vp-kit-result__id">#@producto.id</span>
-                                                        </div>
-                                                        <input class="sist-input sist-input--qty" type="number" name="cantidad-componente-nuevo" min="1" step="1" @bind="currentCantProd" aria-label="Cantidad" />
-                                                        <button type="button" class="sist-btn sist-btn--secondary sist-btn--sm" @onclick="() => AddToProd(producto.id, currentCantProd)">
-                                                            + Agregar
-                                                        </button>
-                                                    </li>
-                                                }
-                                            </ul>
-                                        }
-                                    </div>
-                                }
-                            </div>
-    
-                            <aside class="vp-edit__media">
-                                <div class="sist-section-title">Fotos</div>
-    
-                                @if (DTO.DTO.Imagenes is { Count: > 0 })
-                                {
-                                    <div class="sist-photo-grid">
-                                        @for (var i = 0; i < DTO.DTO.Imagenes.Count; i++)
-                                        {
-                                            var img = DTO.DTO.Imagenes[i];
-                                            <div class="sist-photo" @key="img">
-                                                <img src="@img" alt="Foto del producto @(i + 1)" onerror="this.remove()" />
-                                                @if (i == 0)
-                                                {
-                                                    <span class="sist-photo__cover">Portada</span>
-                                                }
-                                                <button type="button" class="sist-photo__remove" @onclick="() => RemoverImagenDTO(img)" aria-label="Quitar foto">×</button>
-                                            </div>
-                                        }
-                                    </div>
-                                }
-    
-                                @if (imagenesSeleccionadas.Count > 0)
-                                {
-                                    <div class="sist-photo-grid">
-                                        @for (var i = 0; i < imagenesSeleccionadas.Count; i++)
-                                        {
-                                            var img = imagenesSeleccionadas[i];
-                                            <div class="sist-photo" @key="img.Id">
-                                                <img src="@img.url" alt="Foto nueva @(i + 1)" />
-                                                @if (i == 0 && (DTO.DTO.Imagenes is null || DTO.DTO.Imagenes.Count == 0))
-                                                {
-                                                    <span class="sist-photo__cover">Portada</span>
-                                                }
-                                                <button type="button" class="sist-photo__remove" @onclick="() => RemoverImagen(img.Id)" aria-label="Quitar foto">×</button>
-                                            </div>
-                                        }
-                                    </div>
-                                }
-    
-                                <label class="sist-dropzone">
-                                    <InputFile id="fotos-editar" OnChange="CargarImagenes" multiple accept="image/png, image/jpeg, image/webp" class="sist-file-input" />
-                                    <span class="sist-dropzone__icon" aria-hidden="true">
-                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <rect x="3" y="3" width="18" height="18" rx="3"></rect>
-                                            <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                                            <path d="m21 15-5-5L5 21"></path>
-                                        </svg>
-                                    </span>
-                                    <span class="sist-dropzone__title">Sumar fotos</span>
-                                    <span class="sist-dropzone__hint">JPG, PNG o WebP · hasta 5 MB</span>
-                                </label>
-    
-                                @if (!string.IsNullOrEmpty(mensajeFotos))
-                                {
-                                    <div class="sist-alert sist-alert--error" role="alert">@mensajeFotos</div>
-                                }
-                            </aside>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="vp-detail">
-                            <div class="vp-gallery">
-                                @if (ImagenesProducto.Count > 0)
-                                {
-                                    <div class="vp-main">
-                                        <span class="vp-main__fallback" aria-hidden="true">✦</span>
-                                        <img src="@ImagenActual" alt="Foto de @Producto.Nombre" onerror="this.remove()" />
-                                        @if (ImagenesProducto.Count > 1)
-                                        {
-                                            <button type="button" class="vp-nav vp-nav--prev" @onclick="() => MoverImagen(-1)" aria-label="Foto anterior">‹</button>
-                                            <button type="button" class="vp-nav vp-nav--next" @onclick="() => MoverImagen(1)" aria-label="Foto siguiente">›</button>
-                                        }
-                                    </div>
-    
-                                    @if (ImagenesProducto.Count > 1)
-                                    {
-                                        <div class="vp-thumbs">
-                                            @for (var i = 0; i < ImagenesProducto.Count; i++)
-                                            {
-                                                var index = i;
-                                                <button type="button" class="vp-thumb @(index == indiceImagen ? "is-active" : "")" @onclick="() => indiceImagen = index" aria-label="Ver foto @(index + 1)">
-                                                    <img src="@ImagenesProducto[index]" alt="" onerror="this.style.visibility='hidden'" />
-                                                </button>
-                                            }
-                                        </div>
-                                    }
+                                    <span class="sist-badge sist-badge--kit"><span aria-hidden="true">✦</span> Kit</span>
                                 }
                                 else
                                 {
-                                    <div class="vp-main vp-main--empty">
-                                        <span aria-hidden="true">✦</span>
-                                        <span>Sin fotos todavía</span>
-                                    </div>
+                                    <span class="sist-badge sist-badge--producto">Producto</span>
                                 }
-                            </div>
-    
-                            <div class="vp-info">
-                                <div class="vp-badges">
-                                    @if (Producto.tipoProd == TipoProd.Kit)
-                                    {
-                                        <span class="sist-badge sist-badge--kit"><span aria-hidden="true">✦</span> Kit</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="sist-badge sist-badge--producto">Producto</span>
-                                    }
-    
-                                    @if (Producto.Stock == 0)
-                                    {
-                                        <span class="sist-badge sist-badge--danger">Sin stock</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="sist-stock"><span class="sist-dot sist-dot--ok"></span>@Producto.Stock u.</span>
-                                    }
-                                </div>
-    
-                                <h4 class="vp-name">@Producto.Nombre</h4>
-    
-                                @if (!string.IsNullOrWhiteSpace(Producto.Subtitulo))
-                                {
-                                    <p class="vp-subtitle">@Producto.Subtitulo</p>
-                                }
-    
-                                <div class="vp-price-row">
-                                    <span class="sist-price-tag">@FormatoPrecio(Producto.Precio)</span>
-                                </div>
-    
-                                @if (!string.IsNullOrWhiteSpace(Producto.Descripcion))
-                                {
-                                    <p class="vp-description">@Producto.Descripcion</p>
-                                }
-    
-                                @if (Producto.tipoProd == TipoProd.Kit)
-                                {
-                                    <div class="vp-kit">
-                                        <div class="sist-section-title">Receta del kit</div>
-                                        @if (resultadosProcesados.Count > 0)
-                                        {
-                                            <ul class="vp-kit-list">
-                                                @foreach (var item in resultadosProcesados)
-                                                {
-                                                    <li class="vp-kit-item" @key="item.Id">
-                                                        <span class="vp-kit-qty">@item.CantItems ×</span>
-                                                        <span class="vp-kit-item__name">@item.Nombre</span>
-                                                        <span class="vp-kit-item__price">@FormatoPrecio(item.Precio)</span>
-                                                    </li>
-                                                }
-                                            </ul>
-                                        }
-                                        else
-                                        {
-                                            <p class="sist-hint">Este kit todavía no tiene componentes.</p>
-                                        }
-                                    </div>
-                                }
+                                <span class="sist-price-tag">@FormatoPrecio(PrecioFinalizado)</span>
                             </div>
                         </div>
-                    }
+
+                        @if (!string.IsNullOrWhiteSpace(mensajeDeCarga))
+                        {
+                            <p class="vp-done__mensaje">
+                                <span class="vp-done__tick" aria-hidden="true">✓</span>
+                                <span>@mensajeDeCarga</span>
+                            </p>
+                        }
+                    </div>
                 </div>
-    
+
                 <footer class="sist-modal__footer">
-                    @if (editarMode)
-                    {
-                        <p class="sist-modal__note">Los cambios se guardan en la ficha del producto.</p>
-                        <div class="sist-actions">
-                            <button type="button" class="sist-btn sist-btn--ghost" @onclick="CancelarEdicion">Cancelar edición</button>
-                            <button type="submit" class="sist-btn sist-btn--primary" disabled="@guardando">@(guardando ? "Guardando..." : "Guardar cambios")</button>
-                        </div>
-                    }
-                    else
-                    {
-                        <p class="sist-modal__note">Podés editar los datos cuando quieras.</p>
-                        <div class="sist-actions">
-                            <button type="button" class="sist-btn sist-btn--ghost" @onclick="Cerrar">Cerrar</button>
-                            @if (Producto is not null)
-                            {
-                                <button type="button" class="sist-btn sist-btn--primary" @onclick="Editar">Editar</button>
-                            }
-                        </div>
-                    }
+                    <p class="sist-modal__note">La ficha ya está actualizada.</p>
+                    <div class="sist-actions">
+                        <button type="button" class="sist-btn sist-btn--primary" @onclick="Cerrar">Cerrar</button>
+                    </div>
                 </footer>
             </div>
         </div>
-    </EditForm>
+        #endregion
+    }
+    else
+    {
+        <EditForm EditContext="@editContext" OnValidSubmit="AplicarCambios">
+            <DataAnnotationsValidator />
+            <div class="sist-overlay" @onclick="CerrarPorOverlay">
+                <div class="sist-modal sist-modal--xl" role="dialog" aria-modal="true" aria-labelledby="ver-producto-title" tabindex="0" @ref="panelRef" @onkeydown="ManejarTecla" @onclick:stopPropagation="true">
+                    <header class="sist-modal__header">
+                        <div class="sist-modal__header-copy">
+                            <h3 class="sist-modal__title" id="ver-producto-title">@(editarMode ? "Editar producto" : "Ficha del producto")</h3>
+                            <p class="sist-modal__subtitle">@(editarMode ? "Actualizá los datos y guardá los cambios." : "Revisá los datos, las fotos y la receta del kit.")</p>
+                        </div>
+                        <button type="button" class="sist-icon-btn" @onclick="Cerrar" aria-label="Cerrar">×</button>
+                    </header>
 
-    @* Formulario externo: Enter busca componentes sin enviar el producto. *@
-    <form id="@idFormBusqueda" @onsubmit="BuscarProducto" @onsubmit:preventDefault="true">
-        <button type="submit" class="sist-sr-only" tabindex="-1" aria-hidden="true">Buscar</button>
-    </form>
+                    <div class="sist-modal__body">
+                        @if (Producto is null)
+                        {
+                            <div class="sist-empty">
+                                <div class="sist-empty__spark" aria-hidden="true">✦</div>
+                                <h4 class="sist-empty__title">No hay un producto seleccionado</h4>
+                                <p class="sist-empty__text">Cerrá esta ventana y elegí un producto del catálogo.</p>
+                            </div>
+                        }
+                        else if (editarMode && DTO is not null)
+                        {
+                            @if (!string.IsNullOrEmpty(errorGuardado))
+                            {
+                                <div class="sist-alert sist-alert--error" role="alert">@errorGuardado</div>
+                            }
+
+                            <div class="vp-edit">
+                                <div class="vp-edit__form">
+                                    <div class="sist-section-title">Datos del producto</div>
+
+                                    <label class="sist-field">
+                                        <span class="sist-label">Nombre</span>
+                                        <InputText class="sist-input" @bind-Value="DTO.DTO.Nombre" />
+                                        <ValidationMessage For="@(() => DTO.DTO.Nombre)" />
+                                    </label>
+
+                                    <label class="sist-field">
+                                        <span class="sist-label">Subtítulo <span class="sist-optional">(opcional)</span></span>
+                                        <InputText class="sist-input" @bind-Value="DTO.DTO.Subtitulo" />
+                                        <ValidationMessage For="@(() => DTO.DTO.Subtitulo)" />
+                                    </label>
+
+                                    <label class="sist-field">
+                                        <span class="sist-label">Descripción</span>
+                                        <InputTextArea class="sist-textarea" rows="3" @bind-Value="DTO.DTO.Descripcion" />
+                                        <ValidationMessage For="@(() => DTO.DTO.Descripcion)" />
+                                    </label>
+
+                                    <div class="vp-edit__row">
+                                        <label class="sist-field">
+                                            <span class="sist-label">Precio</span>
+                                            <span class="sist-input-wrap">
+                                                <span aria-hidden="true">$</span>
+                                                <InputNumber class="sist-input sist-input--bare" @bind-Value="DTO.DTO.Precio" placeholder="0" />
+                                            </span>
+                                        </label>
+                                        <label class="sist-field">
+                                            <span class="sist-label">Stock</span>
+                                            <span class="sist-input-wrap">
+                                                <InputNumber class="sist-input sist-input--bare" @bind-Value="DTO.DTO.Stock" placeholder="0" />
+                                                <span class="sist-suffix">u.</span>
+                                            </span>
+                                        </label>
+                                    </div>
+
+                                    @* Avisos fuera del grid de dos columnas: no deforman al campo vecino. *@
+                                    <div class="vp-edit__avisos" aria-live="polite">
+                                        <ValidationMessage For="@(() => DTO.DTO.Precio)" />
+                                        <ValidationMessage For="@(() => DTO.DTO.Stock)" />
+                                    </div>
+
+                                    @if (DTO.DTO.tipoProd == TipoProd.Kit)
+                                    {
+                                        <div class="vp-kit vp-kit--edit">
+                                            <div class="vp-kit__head">
+                                                <div>
+                                                    <div class="sist-section-title">Receta del kit</div>
+                                                    <p class="sist-hint">Ajustá las cantidades o sumá componentes.</p>
+                                                </div>
+                                                @if (resultadosProcesados.Count > 0)
+                                                {
+                                                    <span class="sist-chip">@resultadosProcesados.Sum(x => x.CantItems) unidades</span>
+                                                }
+                                            </div>
+
+                                            @if (resultadosProcesados.Count > 0)
+                                            {
+                                                <ul class="vp-kit-list">
+                                                    @foreach (var item in resultadosProcesados)
+                                                    {
+                                                        <li class="vp-kit-item" @key="item.Id">
+                                                            <span class="vp-kit-item__name">@item.Nombre</span>
+                                                            <span class="vp-kit-item__price">@FormatoPrecio(item.Precio)</span>
+                                                            <input class="sist-input sist-input--qty" type="number" name="cantidad-componente" min="1" step="1" @bind="item.CantItems" aria-label="Cantidad de @item.Nombre" />
+                                                            <button type="button" class="vp-kit-remove" @onclick="() => RemoverComponente(item.Id)" aria-label="Quitar @item.Nombre">×</button>
+                                                        </li>
+                                                    }
+                                                </ul>
+                                            }
+                                            else
+                                            {
+                                                <p class="sist-hint">Este kit todavía no tiene componentes.</p>
+                                            }
+
+                                            <div class="vp-kit-search">
+                                                <input class="sist-input" type="search" name="busqueda-componente" form="@idFormBusqueda" @bind="terminoBusqueda" placeholder="Buscar producto por nombre o ID..." />
+                                                <button type="button" class="sist-btn sist-btn--secondary" @onclick="BuscarProducto">
+                                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                                        <circle cx="11" cy="11" r="7"></circle>
+                                                        <path d="m20 20-3.5-3.5"></path>
+                                                    </svg>
+                                                    Buscar
+                                                </button>
+                                            </div>
+
+                                            @if (!string.IsNullOrEmpty(busquedaState))
+                                            {
+                                                <p class="sist-hint" role="status">@busquedaState</p>
+                                            }
+
+                                            @if (productosBusqueda.Count > 0)
+                                            {
+                                                <ul class="vp-kit-results">
+                                                    @foreach (var producto in productosBusqueda)
+                                                    {
+                                                        <li class="vp-kit-result" @key="producto.id">
+                                                            <div class="vp-kit-result__info">
+                                                                <span class="vp-kit-result__name">@producto.Nombre</span>
+                                                                <span class="vp-kit-result__price">@FormatoPrecio(producto.Precio)</span>
+                                                                <span class="vp-kit-result__id">#@producto.id</span>
+                                                            </div>
+                                                            <input class="sist-input sist-input--qty" type="number" name="cantidad-componente-nuevo" min="1" step="1" @bind="currentCantProd" aria-label="Cantidad" />
+                                                            <button type="button" class="sist-btn sist-btn--secondary sist-btn--sm" @onclick="() => AddToProd(producto.id, currentCantProd)">
+                                                                + Agregar
+                                                            </button>
+                                                        </li>
+                                                    }
+                                                </ul>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+
+                                <aside class="vp-edit__media">
+                                    <div class="sist-section-title">Fotos</div>
+
+                                    @if (DTO.DTO.Imagenes is { Count: > 0 })
+                                    {
+                                        <div class="sist-photo-grid">
+                                            @for (var i = 0; i < DTO.DTO.Imagenes.Count; i++)
+                                            {
+                                                var img = DTO.DTO.Imagenes[i];
+                                                <div class="sist-photo" @key="img">
+                                                    <img src="@img" alt="Foto del producto @(i + 1)" onerror="this.remove()" />
+                                                    @if (i == 0)
+                                                    {
+                                                        <span class="sist-photo__cover">Portada</span>
+                                                    }
+                                                    <button type="button" class="sist-photo__remove" @onclick="() => RemoverImagenDTO(img)" aria-label="Quitar foto">×</button>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+
+                                    @if (imagenesSeleccionadas.Count > 0)
+                                    {
+                                        <div class="sist-photo-grid">
+                                            @for (var i = 0; i < imagenesSeleccionadas.Count; i++)
+                                            {
+                                                var img = imagenesSeleccionadas[i];
+                                                <div class="sist-photo" @key="img.Id">
+                                                    <img src="@img.url" alt="Foto nueva @(i + 1)" />
+                                                    @if (i == 0 && (DTO.DTO.Imagenes is null || DTO.DTO.Imagenes.Count == 0))
+                                                    {
+                                                        <span class="sist-photo__cover">Portada</span>
+                                                    }
+                                                    <button type="button" class="sist-photo__remove" @onclick="() => RemoverImagen(img.Id)" aria-label="Quitar foto">×</button>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+
+                                    <label class="sist-dropzone">
+                                        <InputFile id="fotos-editar" OnChange="CargarImagenes" multiple accept="image/png, image/jpeg, image/webp" class="sist-file-input" />
+                                        <span class="sist-dropzone__icon" aria-hidden="true">
+                                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <rect x="3" y="3" width="18" height="18" rx="3"></rect>
+                                                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                                <path d="m21 15-5-5L5 21"></path>
+                                            </svg>
+                                        </span>
+                                        <span class="sist-dropzone__title">Sumar fotos</span>
+                                        <span class="sist-dropzone__hint">JPG, PNG o WebP · hasta 5 MB</span>
+                                    </label>
+
+                                    @if (!string.IsNullOrEmpty(mensajeFotos))
+                                    {
+                                        <div class="sist-alert sist-alert--error" role="alert">@mensajeFotos</div>
+                                    }
+                                </aside>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="vp-detail">
+                                <div class="vp-gallery">
+                                    @if (ImagenesProducto.Count > 0)
+                                    {
+                                        <div class="vp-main">
+                                            <span class="vp-main__fallback" aria-hidden="true">✦</span>
+                                            <img src="@ImagenActual" alt="Foto de @Producto.Nombre" onerror="this.remove()" />
+                                            @if (ImagenesProducto.Count > 1)
+                                            {
+                                                <button type="button" class="vp-nav vp-nav--prev" @onclick="() => MoverImagen(-1)" aria-label="Foto anterior">‹</button>
+                                                <button type="button" class="vp-nav vp-nav--next" @onclick="() => MoverImagen(1)" aria-label="Foto siguiente">›</button>
+                                            }
+                                        </div>
+
+                                        @if (ImagenesProducto.Count > 1)
+                                        {
+                                            <div class="vp-thumbs">
+                                                @for (var i = 0; i < ImagenesProducto.Count; i++)
+                                                {
+                                                    var index = i;
+                                                    <button type="button" class="vp-thumb @(index == indiceImagen ? "is-active" : "")" @onclick="() => indiceImagen = index" aria-label="Ver foto @(index + 1)">
+                                                        <img src="@ImagenesProducto[index]" alt="" onerror="this.style.visibility='hidden'" />
+                                                    </button>
+                                                }
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div class="vp-main vp-main--empty">
+                                            <span aria-hidden="true">✦</span>
+                                            <span>Sin fotos todavía</span>
+                                        </div>
+                                    }
+                                </div>
+
+                                <div class="vp-info">
+                                    <div class="vp-badges">
+                                        @if (Producto.tipoProd == TipoProd.Kit)
+                                        {
+                                            <span class="sist-badge sist-badge--kit"><span aria-hidden="true">✦</span> Kit</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="sist-badge sist-badge--producto">Producto</span>
+                                        }
+
+                                        @if (Producto.Stock == 0)
+                                        {
+                                            <span class="sist-badge sist-badge--danger">Sin stock</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="sist-stock"><span class="sist-dot sist-dot--ok"></span>@Producto.Stock u.</span>
+                                        }
+                                    </div>
+
+                                    <h4 class="vp-name">@Producto.Nombre</h4>
+
+                                    @if (!string.IsNullOrWhiteSpace(Producto.Subtitulo))
+                                    {
+                                        <p class="vp-subtitle">@Producto.Subtitulo</p>
+                                    }
+
+                                    <div class="vp-price-row">
+                                        <span class="sist-price-tag">@FormatoPrecio(Producto.Precio)</span>
+                                    </div>
+
+                                    @if (!string.IsNullOrWhiteSpace(Producto.Descripcion))
+                                    {
+                                        <p class="vp-description">@Producto.Descripcion</p>
+                                    }
+
+                                    @if (Producto.tipoProd == TipoProd.Kit)
+                                    {
+                                        <div class="vp-kit">
+                                            <div class="sist-section-title">Receta del kit</div>
+                                            @if (resultadosProcesados.Count > 0)
+                                            {
+                                                <ul class="vp-kit-list">
+                                                    @foreach (var item in resultadosProcesados)
+                                                    {
+                                                        <li class="vp-kit-item" @key="item.Id">
+                                                            <span class="vp-kit-qty">@item.CantItems ×</span>
+                                                            <span class="vp-kit-item__name">@item.Nombre</span>
+                                                            <span class="vp-kit-item__price">@FormatoPrecio(item.Precio)</span>
+                                                        </li>
+                                                    }
+                                                </ul>
+                                            }
+                                            else
+                                            {
+                                                <p class="sist-hint">Este kit todavía no tiene componentes.</p>
+                                            }
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <footer class="sist-modal__footer">
+                        @if (editarMode)
+                        {
+                            <p class="sist-modal__note">Los cambios se guardan en la ficha del producto.</p>
+                            <div class="sist-actions">
+                                <button type="button" class="sist-btn sist-btn--ghost" @onclick="CancelarEdicion">Cancelar edición</button>
+                                <button type="submit" class="sist-btn sist-btn--primary" disabled="@guardando">@(guardando ? "Guardando..." : "Guardar cambios")</button>
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="sist-modal__note">Podés editar los datos cuando quieras.</p>
+                            <div class="sist-actions">
+                                <button type="button" class="sist-btn sist-btn--ghost" @onclick="Cerrar">Cerrar</button>
+                                @if (Producto is not null)
+                                {
+                                    <button type="button" class="sist-btn sist-btn--primary" @onclick="Editar">Editar</button>
+                                }
+                            </div>
+                        }
+                    </footer>
+                </div>
+            </div>
+        </EditForm>
+
+        @* Formulario externo: Enter busca componentes sin enviar el producto. *@
+        <form id="@idFormBusqueda" @onsubmit="BuscarProducto" @onsubmit:preventDefault="true">
+            <button type="submit" class="sist-sr-only" tabindex="-1" aria-hidden="true">Buscar</button>
+        </form>
+    }
 }
 
 @code {
@@ -375,6 +446,8 @@
 
     private bool editarMode = false;
     private bool guardando;
+    private bool cargaFinalizada;
+    private string? mensajeDeCarga;
     private string? errorGuardado;
     private string? mensajeFotos;
     private int indiceImagen;
@@ -399,15 +472,28 @@
         }
     }
 
+    private string NombreFinalizado => DTO?.DTO.Nombre ?? Producto?.Nombre ?? string.Empty;
+
+    private TipoProd TipoFinalizado => DTO?.DTO.tipoProd ?? Producto?.tipoProd ?? TipoProd.Producto;
+
+    private decimal PrecioFinalizado => DTO?.DTO.Precio ?? Producto?.Precio ?? 0;
+
+    private string? PortadaFinalizada =>
+        DTO?.DTO.Imagenes?.FirstOrDefault()
+        ?? imagenesSeleccionadas.FirstOrDefault()?.url;
+
     private static string FormatoPrecio(decimal precio) =>
         precio.ToString("$ #,##0.##", CultureInfo.GetCultureInfo("es-AR"));
 
+    #region Metodos Estados Componente
     protected override async Task OnParametersSetAsync()
     {
         if (Visible && !estabaVisible)
         {
             focoAplicado = false;
             indiceImagen = 0;
+            cargaFinalizada = false;
+            mensajeDeCarga = null;
         }
         estabaVisible = Visible;
 
@@ -467,7 +553,9 @@
             }
         }
     }
+    #endregion
 
+    #region Manejo Imagenes
     private async Task CargarImagenes(InputFileChangeEventArgs e)
     {
         mensajeFotos = null;
@@ -532,6 +620,26 @@
 
         StateHasChanged();
     }
+
+    private void RemoverImagen(string id)
+    {
+        imagenesSeleccionadas.RemoveAll(p => p.Id == id);
+        mensajeFotos = null;
+        StateHasChanged();
+    }
+
+    private void RemoverImagenDTO(string img)
+    {
+        if (DTO?.DTO?.Imagenes != null && DTO.DTO.Imagenes.Contains(img))
+        {
+            imgParaBorrar.Add(img);
+            DTO.DTO.Imagenes.Remove(img);
+        }
+
+        mensajeFotos = null;
+        StateHasChanged();
+    }
+    #endregion
 
     public async Task BuscarProducto()
     {
@@ -614,13 +722,6 @@
         StateHasChanged();
     }
 
-    private void RemoverImagen(string id)
-    {
-        imagenesSeleccionadas.RemoveAll(p => p.Id == id);
-        mensajeFotos = null;
-        StateHasChanged();
-    }
-
     private void RemoverComponente(int id)
     {
         resultadosProcesados.RemoveAll(r => r.Id == id);
@@ -628,18 +729,7 @@
         StateHasChanged();
     }
 
-    private void RemoverImagenDTO(string img)
-    {
-        if (DTO?.DTO?.Imagenes != null && DTO.DTO.Imagenes.Contains(img))
-        {
-            imgParaBorrar.Add(img);
-            DTO.DTO.Imagenes.Remove(img);
-        }
-
-        mensajeFotos = null;
-        StateHasChanged();
-    }
-
+    #region Limpiar Form
     private async Task Cerrar()
     {
         editarMode = false;
@@ -655,6 +745,8 @@
         currentCantProd = 1;
         indiceImagen = 0;
         guardando = false;
+        cargaFinalizada = false;
+        mensajeDeCarga = null;
         errorGuardado = null;
         mensajeFotos = null;
         productoKitCargadoId = null;
@@ -685,11 +777,14 @@
         terminoBusqueda = string.Empty;
         busquedaState = string.Empty;
         currentCantProd = 1;
+        cargaFinalizada = false;
+        mensajeDeCarga = null;
         errorGuardado = null;
         mensajeFotos = null;
         editContext = new EditContext(new ProductoPrivadoDTO());
         StateHasChanged();
     }
+    #endregion
 
     private async Task AplicarCambios()
     {
@@ -720,10 +815,6 @@
 
             foreach (var img in imagenesSeleccionadas)
             {
-                // var streamContent = new StreamContent(img..OpenReadStream(maxFileSize));
-                // streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(img.archivo.ContentType);
-                // formData.Add(streamContent, "imagenes", img.archivo.Name);
-
                 var contenido = new ByteArrayContent(img.content);
                 contenido.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(img.contentType);
                 formData.Add(contenido, "imagenes", img.nombre);
@@ -754,26 +845,22 @@
             formData.Add(new StringContent(JsonSerializer.Serialize(DTO)), "producto");
 
             var response = await http.UpdateFormDataAsync(url, formData);
-            if (!response.IsSuccess)
+            if (response.IsSuccess)
             {
-                // En un 5xx el body puede ser el stack trace: no se muestra al usuario.
-                var esErrorDeServidor = response.Response is not null
-                    && (int)response.Response.StatusCode >= 500;
-
-                errorGuardado = esErrorDeServidor || string.IsNullOrWhiteSpace(response.Message)
-                    ? "No pudimos guardar los cambios. Revisá los datos e intentá de nuevo."
-                    : response.Message;
-                return;
+                mensajeDeCarga = response.Data;
+                cargaFinalizada = true;
+                focoAplicado = false;
+                await OnActualizado.InvokeAsync();
+                StateHasChanged();
             }
-
-            await CargarKitProductos();
-            await OnActualizado.InvokeAsync();
-            StateHasChanged();
-            await Cerrar();
+            else
+            {
+                errorGuardado = response.Data;
+            }
         }
         catch
         {
-            errorGuardado = "No pudimos guardar los cambios. Revisá los datos e intentá de nuevo.";
+            errorGuardado = "No hubo respuesta por parte del servidor.";
         }
         finally
         {
@@ -813,6 +900,8 @@
         terminoBusqueda = string.Empty;
         busquedaState = string.Empty;
         currentCantProd = 1;
+        cargaFinalizada = false;
+        mensajeDeCarga = null;
         errorGuardado = null;
         mensajeFotos = null;
         StateHasChanged();

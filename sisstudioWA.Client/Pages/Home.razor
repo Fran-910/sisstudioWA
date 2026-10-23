@@ -1,79 +1,236 @@
 ﻿@page "/"
 @using sisstudioWA.Servicios.ServicioHttp
 @using sisstudioWA.Shared.DTO
-@inject NavigationManager navigationManager
+@using sisstudioWA.Shared.Enum
 @inject IHttpService http
 
-<div>
-    <button @onclick="@(() => navigationManager.NavigateTo("/productosadmin"))">Panel de Administrador</button>
-</div>
+<PageTitle>Catálogo · SIST Creative Studio</PageTitle>
 
-<div>
-    @if(productos is not null)
-    {
-        <p>Productos: </p>
-        @foreach(var prod in productos)
+<section class="home">
+    <section class="hero" aria-labelledby="hero-title">
+        <div class="hero__copy">
+            <p class="hero__eyebrow"><span aria-hidden="true">✦</span> SIST Creative Studio</p>
+            <h1 class="hero__title" id="hero-title">Detalles que se sienten <span>hechos para vos.</span></h1>
+            <p class="hero__text">Kits y productos en ediciones pequeñas, pensados para regalar, coleccionar y usar todos los días.</p>
+            <div class="hero__actions">
+                <a class="sist-btn sist-btn--primary" href="#catalogo">Ver catálogo</a>
+                <a class="sist-btn sist-btn--secondary" href="#catalogo" @onclick="VerKits">Ver kits</a>
+            </div>
+            <ul class="hero__meta">
+                <li><span aria-hidden="true">✦</span> Hecho a mano</li>
+                <li><span aria-hidden="true">✦</span> Envíos a todo el país</li>
+                <li><span aria-hidden="true">✦</span> Ediciones limitadas</li>
+            </ul>
+        </div>
+
+        <div class="hero__visual" aria-hidden="true">
+            <span class="hero__blob"></span>
+            <div class="hero__frame">
+                @if (ImagenDestacada is not null)
+                {
+                    <img src="@ImagenDestacada" alt="" />
+                }
+                else
+                {
+                    <span class="hero__frame-ph">✦</span>
+                }
+            </div>
+            <span class="hero__sticker">Hecho a mano ✦</span>
+            <span class="hero__spark hero__spark--one">✦</span>
+            <span class="hero__spark hero__spark--two">✦</span>
+        </div>
+    </section>
+
+    <section class="catalogo" id="catalogo" aria-labelledby="catalogo-title">
+        <header class="catalogo__head">
+            <div class="catalogo__head-copy">
+                <p class="catalogo__eyebrow">La vidriera</p>
+                <h2 class="catalogo__title" id="catalogo-title">Novedades</h2>
+                @if (!cargando && string.IsNullOrEmpty(errorMsg) && ProductosFiltrados.Any())
+                {
+                    <div class="sist-page-meta">
+                        <span class="sist-count">@CantidadFiltrada @(CantidadFiltrada == 1 ? "producto" : "productos")</span>
+                    </div>
+                }
+            </div>
+
+            <div class="catalogo__filters" role="group" aria-label="Filtrar por tipo de producto">
+                <button type="button"
+                        class="catalogo__filter @(EsFiltro("todos") ? "is-active" : "")"
+                        aria-pressed="@Aria(EsFiltro("todos"))"
+                        @onclick="VerTodos">
+                    Todos
+                </button>
+                <button type="button"
+                        class="catalogo__filter @(EsFiltro("productos") ? "is-active" : "")"
+                        aria-pressed="@Aria(EsFiltro("productos"))"
+                        @onclick="VerProductos">
+                    Productos
+                </button>
+                <button type="button"
+                        class="catalogo__filter @(EsFiltro("kits") ? "is-active" : "")"
+                        aria-pressed="@Aria(EsFiltro("kits"))"
+                        @onclick="VerKits">
+                    Kits
+                </button>
+            </div>
+        </header>
+
+        @if (cargando)
         {
-            <img src="@prod.Imagenes.FirstOrDefault()"/>
-            <p>Nombre: @prod.Nombre</p>
-            <p>Subtitulo: @prod.Subtitulo</p>
-            <p>Descripción: @prod.Descripcion</p>
-
-            <p>Precio @prod.Precio</p>
-            @if (prod.HayStock)
-            {
-                <p>Disponible!</p>
-            }
-            else
-            {
-                <p>No disponible.</p>
-            }
+            <div class="catalogo__grid catalogo__grid--skeleton" aria-busy="true" aria-label="Cargando catálogo">
+                @for (var i = 0; i < 6; i++)
+                {
+                    <div class="card-skeleton" aria-hidden="true">
+                        <div class="card-skeleton__media sist-skeleton"></div>
+                        <div class="card-skeleton__body">
+                            <div class="sist-skeleton" style="width: 72%; height: 14px;"></div>
+                            <div class="sist-skeleton" style="width: 48%; height: 12px;"></div>
+                            <div class="sist-skeleton" style="width: 38%; height: 13px; margin-top: auto;"></div>
+                        </div>
+                    </div>
+                }
+            </div>
         }
-    }
-    else
-    {
-        @if(error && !string.IsNullOrEmpty(errorMsg))
+        else if (!string.IsNullOrEmpty(errorMsg))
         {
-            <p>Error: @errorMsg</p>
+            <div class="sist-alert sist-alert--error catalogo__error" role="alert">
+                <span>@errorMsg</span>
+                <button type="button" class="sist-btn sist-btn--secondary sist-btn--sm" @onclick="GetProductos">Reintentar</button>
+            </div>
+        }
+        else if (productos is null || productos.Count == 0)
+        {
+            <div class="sist-empty">
+                <div class="sist-empty__spark" aria-hidden="true">✦</div>
+                <h3 class="sist-empty__title">Todavía no hay productos</h3>
+                <p class="sist-empty__text">Estamos preparando la vidriera. Volvé pronto.</p>
+            </div>
+        }
+        else if (!ProductosFiltrados.Any())
+        {
+            <div class="sist-empty">
+                <div class="sist-empty__spark" aria-hidden="true">✦</div>
+                <h3 class="sist-empty__title">No hay productos en esta categoría</h3>
+                <p class="sist-empty__text">Probá con otro filtro para seguir explorando.</p>
+                <button type="button" class="sist-btn sist-btn--secondary" @onclick="VerTodos">Ver todo</button>
+            </div>
         }
         else
         {
-            <p>Cargando...</p>
+            <div class="catalogo__grid">
+                @foreach (var prod in ProductosFiltrados)
+                {
+                    <ProductoCard @key="prod.Id" AbrirProd="@(() => AbrirVer(prod))" prod="prod" />
+                }
+            </div>
         }
+    </section>
 
-    }
+    <section class="beneficios" aria-label="Por qué elegir SIST">
+        <article class="beneficio">
+            <span class="beneficio__icon" aria-hidden="true">✦</span>
+            <h3 class="beneficio__title">Producción artesanal</h3>
+            <p class="beneficio__text">Cada pieza se arma a mano y en pequeños lotes.</p>
+        </article>
+        <article class="beneficio">
+            <span class="beneficio__icon" aria-hidden="true">✿</span>
+            <h3 class="beneficio__title">Atención personalizada</h3>
+            <p class="beneficio__text">Te acompañamos para elegir el detalle justo.</p>
+        </article>
+        <article class="beneficio">
+            <span class="beneficio__icon" aria-hidden="true">◈</span>
+            <h3 class="beneficio__title">Ediciones limitadas</h3>
+            <p class="beneficio__text">Series cortas para que lo tuyo sea único.</p>
+        </article>
+    </section>
+</section>
 
-</div>
+<VerProductoPublico @bind-Visible="mostrarProd" Producto="productoSeleccionado" />
 
 @code {
-    private List<ProductoPublicoDTO>? productos;
+    private bool cargando = true;
     private string? errorMsg;
-    private bool error = false;
+    private string filtroActual = "todos";
+    private List<ProductoPublicoDTO>? productos;
+    private ProductoPublicoDTO? productoSeleccionado;
+    private bool mostrarProd;
 
-    protected override async void OnInitialized()
+    private IEnumerable<ProductoPublicoDTO> ProductosFiltrados
+    {
+        get
+        {
+            if (productos is null)
+            {
+                return Enumerable.Empty<ProductoPublicoDTO>();
+            }
+
+            return filtroActual switch
+            {
+                "productos" => productos.Where(p => p.tipoProd == TipoProd.Producto),
+                "kits" => productos.Where(p => p.tipoProd == TipoProd.Kit),
+                _ => productos
+            };
+        }
+    }
+
+    private int CantidadFiltrada => ProductosFiltrados.Count();
+
+    private ProductoPublicoDTO? ProductoDestacado =>
+        productos?.FirstOrDefault(p => p.Imagenes is { Count: > 0 });
+
+    private string? ImagenDestacada => ProductoDestacado?.Imagenes.FirstOrDefault();
+
+    private bool EsFiltro(string filtro) => filtroActual == filtro;
+
+    private static string Aria(bool valor) => valor ? "true" : "false";
+
+    private void VerTodos() => filtroActual = "todos";
+
+    private void VerProductos() => filtroActual = "productos";
+
+    private void VerKits() => filtroActual = "kits";
+
+    protected override async Task OnInitializedAsync()
     {
         await GetProductos();
     }
 
-    public async Task GetProductos()
+    private async Task GetProductos()
     {
-        var response = await http.GetAsync<List<ProductoPublicoDTO>>("api/producto");
+        cargando = true;
+        errorMsg = null;
 
-        if(response.IsSuccess)
+        try
         {
-            productos = response.Data;
+            var response = await http.GetAsync<List<ProductoPublicoDTO>>("api/producto");
+            if (response.IsSuccess)
+            {
+                productos = response.Data ?? new List<ProductoPublicoDTO>();
+            }
+            else
+            {
+                productos = null;
+                errorMsg = string.IsNullOrWhiteSpace(response.Message)
+                    ? "No pudimos cargar el catálogo. Reintentá en unos segundos."
+                    : response.Message;
+            }
         }
-        else
+        catch
         {
-            error = true;
-            errorMsg = response.Message;
+            productos = null;
+            errorMsg = "No pudimos cargar el catálogo. Reintentá en unos segundos.";
         }
-
-        StateHasChanged();
+        finally
+        {
+            cargando = false;
+            StateHasChanged();
+        }
     }
 
-    public async Task VerProducto(ProductoPublicoDTO prod)
+    private void AbrirVer(ProductoPublicoDTO prod)
     {
-        
+        productoSeleccionado = prod;
+        mostrarProd = true;
     }
 }
